@@ -39,27 +39,29 @@ The plugin scores projects across 6 dimensions — correctness, safety, complete
 
 ### Install
 
-```bash
-# 1. Register the marketplace
-claude plugin marketplace add https://github.com/whchoi98/harness-eval
+From the terminal (shell):
 
-# 2. Install the plugin
+```bash
+claude plugin marketplace add https://github.com/whchoi98/harness-eval
 claude plugin install harness-eval@harness-eval
 ```
 
-After installation, the `/harness-eval` command becomes available in all Claude Code sessions.
+Or from inside a Claude Code session:
+
+```
+/plugin marketplace add https://github.com/whchoi98/harness-eval
+/plugin install harness-eval@harness-eval
+```
 
 ### Verify
 
 ```bash
-# Check installed plugins
 claude plugin list
 ```
 
 ### Update
 
 ```bash
-# Refresh marketplace cache and update the plugin
 claude plugin marketplace refresh
 claude plugin install harness-eval@harness-eval
 ```
@@ -67,42 +69,28 @@ claude plugin install harness-eval@harness-eval
 ### Uninstall
 
 ```bash
-# Remove the plugin
 claude plugin remove harness-eval
-
-# Remove the marketplace (optional)
 claude plugin marketplace remove harness-eval
 ```
 
 ### From Source (For Development)
 
 ```bash
-# Clone the repository
 git clone https://github.com/whchoi98/harness-eval.git
-
-# Navigate to the plugin directory
 cd harness-eval/plugins/harness-eval
-
-# Run the setup script
 bash scripts/setup.sh
 ```
 
 ## Usage
 
-Invoke the evaluation through the `/harness-eval` slash command or directly via skills:
+Run evaluations from inside a Claude Code session:
 
-```bash
-# Quick evaluation — checklist-based, < 30 seconds
-/harness-eval quick
-
-# Standard evaluation — static + dynamic analysis
-/harness-eval standard
-
-# Full evaluation — multi-agent comprehensive review
-/harness-eval full
-
-# Compare two evaluations
-/harness-eval compare
+```
+/harness-eval:quick              # Checklist-based scoring (~30s)
+/harness-eval:standard           # Static + dynamic analysis (~2-3min)
+/harness-eval:full               # Multi-agent comprehensive review (~5-10min)
+/harness-eval:compare            # Compare with previous evaluation
+/harness-eval:harness-eval full  # Argument style also works
 ```
 
 Run evaluation scripts directly:
@@ -281,27 +269,29 @@ harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계
 
 ### 설치
 
-```bash
-# 1. 마켓플레이스 등록
-claude plugin marketplace add https://github.com/whchoi98/harness-eval
+터미널 (Shell)에서:
 
-# 2. 플러그인 설치
+```bash
+claude plugin marketplace add https://github.com/whchoi98/harness-eval
 claude plugin install harness-eval@harness-eval
 ```
 
-설치 후 모든 Claude Code 세션에서 `/harness-eval` 커맨드를 사용할 수 있습니다.
+또는 Claude Code 세션 안에서:
+
+```
+/plugin marketplace add https://github.com/whchoi98/harness-eval
+/plugin install harness-eval@harness-eval
+```
 
 ### 확인
 
 ```bash
-# 설치된 플러그인 목록 조회
 claude plugin list
 ```
 
 ### 업데이트
 
 ```bash
-# 마켓플레이스 캐시 갱신 후 플러그인 재설치
 claude plugin marketplace refresh
 claude plugin install harness-eval@harness-eval
 ```
@@ -309,42 +299,28 @@ claude plugin install harness-eval@harness-eval
 ### 삭제
 
 ```bash
-# 플러그인 제거
 claude plugin remove harness-eval
-
-# 마켓플레이스 제거 (선택)
 claude plugin marketplace remove harness-eval
 ```
 
 ### 소스에서 설치 (개발용)
 
 ```bash
-# 저장소 클론
 git clone https://github.com/whchoi98/harness-eval.git
-
-# 플러그인 디렉토리로 이동
 cd harness-eval/plugins/harness-eval
-
-# 설정 스크립트 실행
 bash scripts/setup.sh
 ```
 
 ## 사용법
 
-`/harness-eval` 슬래시 커맨드 또는 스킬을 통해 평가를 실행합니다:
+Claude Code 세션 안에서 평가를 실행합니다:
 
-```bash
-# Quick 평가 — 체크리스트 기반, 30초 미만
-/harness-eval quick
-
-# Standard 평가 — 정적 + 동적 분석
-/harness-eval standard
-
-# Full 평가 — 멀티 에이전트 종합 리뷰
-/harness-eval full
-
-# 두 평가 비교
-/harness-eval compare
+```
+/harness-eval:quick              # 체크리스트 기반 평가 (~30초)
+/harness-eval:standard           # 정적+동적 분석 (~2-3분)
+/harness-eval:full               # 멀티 에이전트 종합 평가 (~5-10분)
+/harness-eval:compare            # 이전 평가와 비교
+/harness-eval:harness-eval full  # 인자 방식도 가능
 ```
 
 평가 스크립트를 직접 실행할 수도 있습니다:
