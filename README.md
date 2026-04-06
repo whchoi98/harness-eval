@@ -37,6 +37,30 @@ The plugin scores projects across 6 dimensions — correctness, safety, complete
 
 ## Installation
 
+### As a Claude Code Plugin (Recommended)
+
+```bash
+# Install directly from GitHub
+claude plugin add https://github.com/whchoi98/harness-eval.git
+```
+
+After installation, the `/harness-eval` command becomes available in all Claude Code sessions.
+
+To verify the installation:
+
+```bash
+# List installed plugins
+claude plugin list
+```
+
+To uninstall:
+
+```bash
+claude plugin remove harness-eval
+```
+
+### From Source (For Development)
+
 ```bash
 # Clone the repository
 git clone https://github.com/whchoi98/harness-eval.git
@@ -47,8 +71,6 @@ cd harness-eval
 # Run the setup script
 bash scripts/setup.sh
 ```
-
-To use as a Claude Code plugin, place the directory in your Claude Code plugins path or register it in your plugin configuration.
 
 ## Usage
 
@@ -248,6 +270,30 @@ harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계
 
 ## 설치 방법
 
+### Claude Code 플러그인으로 설치 (권장)
+
+```bash
+# GitHub에서 직접 설치
+claude plugin add https://github.com/whchoi98/harness-eval.git
+```
+
+설치 후 모든 Claude Code 세션에서 `/harness-eval` 커맨드를 사용할 수 있습니다.
+
+설치 확인:
+
+```bash
+# 설치된 플러그인 목록 조회
+claude plugin list
+```
+
+제거:
+
+```bash
+claude plugin remove harness-eval
+```
+
+### 소스에서 설치 (개발용)
+
 ```bash
 # 저장소 클론
 git clone https://github.com/whchoi98/harness-eval.git
@@ -258,8 +304,6 @@ cd harness-eval
 # 설정 스크립트 실행
 bash scripts/setup.sh
 ```
-
-Claude Code 플러그인으로 사용하려면 프로젝트 디렉토리를 Claude Code 플러그인 경로에 배치하거나 플러그인 설정에 등록합니다.
 
 ## 사용법
 
