@@ -21,7 +21,7 @@ You are performing a Quick harness evaluation. This is a fast, checklist-based a
    - `checklist` — per-tier pass/total counts
    - `results` — individual check pass/fail details
 
-4. **Generate report**: Present results in this format:
+4. **Generate bilingual report**: Present results in BOTH English and Korean, separated by a horizontal rule. Use this format:
 
    ```
    # Harness Quick Evaluation
@@ -43,9 +43,31 @@ You are performing a Quick harness evaluation. This is a fast, checklist-based a
 
    ## Next Steps
    (List 3-5 specific improvements to reach the next tier, prioritized by impact)
+
+   ---
+
+   # 하네스 Quick 평가
+
+   **점수: {overall}/10 ({grade})**
+   **날짜: {timestamp}**
+
+   ## 체크리스트 결과
+
+   | 단계 | 통과 | 전체 | 상태 |
+   |------|------|------|------|
+   | 기본 (6.0+) | X | Y | ✓/✗ |
+   | 기능적 (7.0+) | X | Y | ✓/✗ |
+   | 견고 (8.0+) | X | Y | ✓/✗ |
+   | 프로덕션 (9.0+) | X | Y | ✓/✗ |
+
+   ## 실패 항목
+   (각 FAIL 항목의 설명과 단계를 나열)
+
+   ## 다음 단계
+   (다음 단계에 도달하기 위한 3-5개 구체적 개선 사항, 영향도 순)
    ```
 
-5. **Provide actionable guidance**: For each failed check, explain what the user needs to do to fix it. Be specific — include file paths and example content.
+5. **Provide actionable guidance**: For each failed check, explain what the user needs to do to fix it in both languages. Be specific — include file paths and example content.
 
 ## Error Handling
 
@@ -56,3 +78,7 @@ You are performing a Quick harness evaluation. This is a fast, checklist-based a
 ## Tone
 
 Be direct and constructive. Focus on what to do next, not what's wrong.
+
+## Language
+
+Always produce the report in both English and Korean. English section first, then a horizontal rule (---), then the Korean section. Tables, scores, file paths, and code blocks are identical in both sections — only the prose text differs.

@@ -22,7 +22,7 @@ You are performing a harness evaluation comparison. This analyzes evaluation his
    ```
    This returns current vs previous delta.
 
-4. **Present comparison report**:
+4. **Present bilingual comparison report** (English first, then `---`, then Korean):
 
    ```
    # Harness Evaluation Comparison
@@ -42,6 +42,26 @@ You are performing a harness evaluation comparison. This analyzes evaluation his
    | Functional | X/Y | X/Y | ↑/↓/→ |
    | Robust | X/Y | X/Y | ↑/↓/→ |
    | Production | X/Y | X/Y | ↑/↓/→ |
+
+   ---
+
+   # 하네스 평가 비교
+
+   ## 현재 vs 이전
+
+   | 지표 | 이전 | 현재 | 변화 |
+   |------|------|------|------|
+   | 점수 | {prev_score}/10 | {curr_score}/10 | {delta} |
+   | 등급 | {prev_grade} | {curr_grade} | {changed?} |
+
+   ## 단계별 변화
+
+   | 단계 | 이전 | 현재 | 변화 |
+   |------|------|------|------|
+   | 기본 | X/Y | X/Y | ↑/↓/→ |
+   | 기능적 | X/Y | X/Y | ↑/↓/→ |
+   | 견고 | X/Y | X/Y | ↑/↓/→ |
+   | 프로덕션 | X/Y | X/Y | ↑/↓/→ |
    ```
 
 5. **Score history chart**: If 3+ evaluations exist, show an ASCII bar chart:
@@ -70,3 +90,7 @@ You are performing a harness evaluation comparison. This analyzes evaluation his
 ## Tone
 
 Be analytical and forward-looking. Focus on trajectory and momentum, not just current state.
+
+## Language
+
+Always produce the report in both English and Korean. English section first, then a horizontal rule (---), then the Korean section. Tables, scores, and charts are identical in both sections — only the prose text (analysis, recommendations, warnings) differs.

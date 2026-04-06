@@ -193,7 +193,7 @@ You are the synthesizer agent for harness-eval. Aggregate all evaluation data be
 ## Design Evaluator Output
 <INSERT design_eval_output HERE>
 
-Follow all instructions in your agent definition. Handle any AGENT_FAILED markers by setting those dimensions to null and noting them as missing. Produce the final report in the specified format. After the report, execute the history save and badge update commands.
+Follow all instructions in your agent definition. Handle any AGENT_FAILED markers by setting those dimensions to null and noting them as missing. Produce the final report in BILINGUAL format (English first, then --- separator, then Korean). Tables, scores, and code are identical in both sections — only prose text differs. After the report, execute the history save and badge update commands.
 ```
 
 Store the output as `final_report`.
@@ -317,3 +317,7 @@ Phase 4:
 ## Tone
 
 Be thorough and transparent. If any phase had failures, clearly communicate what was affected and what data is missing. The user should always understand the completeness and confidence level of their report.
+
+## Language
+
+Always produce the report in both English and Korean. English section first, then a horizontal rule (---), then the Korean section. Tables, scores, file paths, and code blocks are identical in both sections — only the prose text differs. This applies to the final synthesized report, fallback reports, and all error messages shown to the user.

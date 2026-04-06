@@ -57,7 +57,7 @@ HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/sc
 
 ## Phase 4: Report Generation
 
-Combine all results into a comprehensive report using this structure:
+Combine all results into a **bilingual** (English + Korean) report. English section first, then `---`, then Korean section. Tables, scores, and code are identical — only prose differs.
 
 ```
 # Harness Standard Evaluation
@@ -75,7 +75,6 @@ Combine all results into a comprehensive report using this structure:
 | Consistency | X | Y | Z |
 
 ## Static Analysis Findings
-
 (List each WARN and FAIL with details, file path, and suggestion)
 
 ## Dynamic Analysis Results
@@ -99,8 +98,49 @@ Combine all results into a comprehensive report using this structure:
 | Production (9.0+) | X | Y | ✓/✗ |
 
 ## Improvement Roadmap
+(Priority-ordered list of 5-10 specific improvements)
 
-(Priority-ordered list of 5-10 specific improvements, combining static analysis suggestions with checklist gaps)
+---
+
+# 하네스 Standard 평가
+
+**점수: {overall}/10 ({grade})**
+**날짜: {timestamp}**
+
+## 정적 분석 요약
+
+| 카테고리 | 통과 | 경고 | 실패 |
+|----------|------|------|------|
+| 정확성 | X | Y | Z |
+| 안전성 | X | Y | Z |
+| 완전성 | X | Y | Z |
+| 일관성 | X | Y | Z |
+
+## 정적 분석 발견 사항
+(각 WARN 및 FAIL 항목의 상세 내용, 파일 경로, 개선 제안)
+
+## 동적 분석 결과
+
+### 훅 실행
+(훅 테스트 결과 — 통과/실패 항목)
+
+### 시크릿 패턴 정확도
+(해당되는 경우 TP/FP 결과)
+
+### 테스트 스위트 결과
+(기존 테스트 실행 결과, 또는 "테스트 스위트 없음")
+
+## 체크리스트 결과
+
+| 단계 | 통과 | 전체 | 상태 |
+|------|------|------|------|
+| 기본 (6.0+) | X | Y | ✓/✗ |
+| 기능적 (7.0+) | X | Y | ✓/✗ |
+| 견고 (8.0+) | X | Y | ✓/✗ |
+| 프로덕션 (9.0+) | X | Y | ✓/✗ |
+
+## 개선 로드맵
+(영향도 순으로 정렬된 5-10개 구체적 개선 사항)
 ```
 
 ## Phase 5: Save History
@@ -122,3 +162,7 @@ Report the evaluation ID to the user.
 ## Tone
 
 Be thorough but constructive. For each issue found, provide a specific fix. Prioritize the improvement roadmap by impact.
+
+## Language
+
+Always produce the report in both English and Korean. English section first, then a horizontal rule (---), then the Korean section. Tables, scores, file paths, and code blocks are identical in both sections — only the prose text differs.
