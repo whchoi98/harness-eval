@@ -11,15 +11,18 @@
 
 ### 2. Setup
 ```bash
-git clone <repo-url>
-cd harness-eval
+git clone https://github.com/whchoi98/harness-eval.git
+cd harness-eval/plugins/harness-eval
 bash scripts/setup.sh
 ```
 
 ### 3. Verify
 ```bash
-# Run tests
-bash tests/run-all.sh
+# Run evaluation script tests
+HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
+
+# Run harness validation tests (resolves to repo root automatically)
+bash tests/harness-run-all.sh
 
 # Validate JSON
 python3 -m json.tool .claude-plugin/plugin.json
@@ -56,11 +59,15 @@ Mock projects at 4 maturity levels in `tests/fixtures/`:
 - `robust-project` — tests, deny list, module docs
 - `production-project` — CI/CD, changelog, comprehensive docs
 
-### Plugin Structure
-- `.claude-plugin/plugin.json` — Manifest registering all skills, agents, commands, hooks
-- Skills are user-facing evaluation entry points
-- Agents are spawned by the Full skill for parallel analysis
-- Commands provide the `/harness-eval` slash command
+### Monorepo Structure
+This plugin lives in a monorepo: `plugins/harness-eval/` is the plugin root, the repo root contains the marketplace manifest (`.claude-plugin/marketplace.json`).
+
+### Plugin Convention
+- `.claude-plugin/plugin.json` — Metadata only (name, version, author)
+- Skills: `skills/<name>/SKILL.md` — auto-discovered by Claude Code
+- Agents: `agents/<name>.md` — auto-discovered
+- Commands: `commands/<name>.md` — auto-discovered
+- Hooks: `hooks/hooks.json` — registered via JSON file
 
 ## Troubleshooting
 

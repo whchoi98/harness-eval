@@ -24,10 +24,10 @@ harness-eval은 Claude Code 하네스 엔지니어링 품질을 체계적으로 
 - **scripts/badge.sh** -- 점수 기반 뱃지(A+~F) SVG/마크다운 생성.
 
 ### Orchestration Layer (스킬)
-- **skills/quick.md** -- 빠른 체크리스트 기반 평가 (< 30초).
-- **skills/standard.md** -- 정적+동적 분석 포함 표준 평가.
-- **skills/full.md** -- 멀티 에이전트 병렬 평가 오케스트레이터.
-- **skills/compare.md** -- 두 평가 간 비교 분석.
+- **skills/quick/SKILL.md** -- 빠른 체크리스트 기반 평가 (< 30초).
+- **skills/standard/SKILL.md** -- 정적+동적 분석 포함 표준 평가.
+- **skills/full/SKILL.md** -- 멀티 에이전트 병렬 평가 오케스트레이터.
+- **skills/compare/SKILL.md** -- 두 평가 간 비교 분석.
 
 ### Analysis Layer (에이전트)
 - **agents/collector.md** -- 대상 프로젝트 정보 수집 (파일 구조, 설정, 스크립트).
@@ -48,8 +48,10 @@ harness-eval은 Claude Code 하네스 엔지니어링 품질을 체계적으로 
 - **tests/fixtures/** -- 4단계 성숙도 모의 프로젝트 (minimal, functional, robust, production).
 
 ### Entry Point
-- **commands/harness-eval.md** -- `/harness-eval` 슬래시 커맨드.
-- **hooks/post-eval-badge.sh** -- 평가 완료 후 뱃지 자동 생성 (Stop 이벤트).
+- **commands/harness-eval.md** -- `/harness-eval [quick|standard|full|compare]` 메인 커맨드.
+- **commands/quick.md, standard.md, full.md, compare.md** -- 개별 모드 커맨드.
+- **hooks/hooks.json** -- 훅 이벤트 등록 (Stop -> post-eval-badge.sh).
+- **hooks/post-eval-badge.sh** -- 평가 완료 후 뱃지 자동 생성.
 
 ## Full Architecture Diagram
 
@@ -124,8 +126,8 @@ User -> /harness-eval -> Skill (Quick|Standard|Full)
 - **4단계 테스트 픽스처** -- minimal → functional → robust → production 성숙도 스펙트럼으로 점수 차이를 검증
 
 ## Operations
-- Evaluation: see `skills/quick.md`, `skills/standard.md`, `skills/full.md`
-- Test: `bash tests/run-all.sh`
+- Evaluation: see `skills/quick/SKILL.md`, `skills/standard/SKILL.md`, `skills/full/SKILL.md`
+- Test: `bash tests/harness-run-all.sh`
 
 ---
 
@@ -146,10 +148,10 @@ Users initiate evaluations via skills, and results are delivered as structured r
 - **scripts/badge.sh** -- Score-based badge (A+ to F) SVG/markdown generation.
 
 ### Orchestration Layer (Skills)
-- **skills/quick.md** -- Fast checklist-based evaluation (< 30 seconds).
-- **skills/standard.md** -- Standard evaluation with static + dynamic analysis.
-- **skills/full.md** -- Multi-agent parallel evaluation orchestrator.
-- **skills/compare.md** -- Comparative analysis between two evaluations.
+- **skills/quick/SKILL.md** -- Fast checklist-based evaluation (< 30 seconds).
+- **skills/standard/SKILL.md** -- Standard evaluation with static + dynamic analysis.
+- **skills/full/SKILL.md** -- Multi-agent parallel evaluation orchestrator.
+- **skills/compare/SKILL.md** -- Comparative analysis between two evaluations.
 
 ### Analysis Layer (Agents)
 - **agents/collector.md** -- Target project information gathering (file structure, settings, scripts).
@@ -170,8 +172,10 @@ Users initiate evaluations via skills, and results are delivered as structured r
 - **tests/fixtures/** -- 4-level maturity mock projects (minimal, functional, robust, production).
 
 ### Entry Point
-- **commands/harness-eval.md** -- `/harness-eval` slash command.
-- **hooks/post-eval-badge.sh** -- Auto badge generation after evaluation (Stop event).
+- **commands/harness-eval.md** -- `/harness-eval [quick|standard|full|compare]` main command.
+- **commands/quick.md, standard.md, full.md, compare.md** -- Individual mode commands.
+- **hooks/hooks.json** -- Hook event registration (Stop -> post-eval-badge.sh).
+- **hooks/post-eval-badge.sh** -- Auto badge generation after evaluation.
 
 ## Full Architecture Diagram
 
@@ -245,5 +249,5 @@ User -> /harness-eval -> Skill (Quick|Standard|Full)
 - **4-level test fixtures** -- minimal -> functional -> robust -> production maturity spectrum verifies score differentiation
 
 ## Operations
-- Evaluation: see `skills/quick.md`, `skills/standard.md`, `skills/full.md`
-- Test: `bash tests/run-all.sh`
+- Evaluation: see `skills/quick/SKILL.md`, `skills/standard/SKILL.md`, `skills/full/SKILL.md`
+- Test: `bash tests/harness-run-all.sh`
