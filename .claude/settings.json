@@ -8,10 +8,10 @@
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",
       "Bash(chmod 777:*)",
-      "Bash(curl:* | bash)",
-      "Bash(wget:* | bash)",
+      "Bash(curl * | bash:*)",
+      "Bash(wget * | bash:*)",
       "Bash(eval:*)",
-      "Bash(python3 -c:*import os*)"
+      "Bash(python3 -c:*)"
     ]
   },
   "hooks": {
@@ -26,13 +26,13 @@
         ]
       }
     ],
-    "PreCommit": [
+    "PreToolUse": [
       {
-        "matcher": "",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/secret-scan.sh 2>/dev/null || true"
+            "command": "bash .claude/hooks/secret-scan.sh \"$TOOL_INPUT\" 2>/dev/null || true"
           }
         ]
       }
