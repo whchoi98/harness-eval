@@ -81,6 +81,15 @@ You are performing a harness evaluation comparison. This analyzes evaluation his
 
 7. **Recommendations**: Based on the comparison, suggest the highest-impact actions to continue improving.
 
+8. **Save reports to files**: Save the English and Korean comparison reports as separate files:
+   ```bash
+   mkdir -p .harness-eval/reports
+   ```
+   - English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-compare-en.md`
+   - Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-compare-ko.md`
+
+   Use the Write tool to create each file. Inform the user of the saved file paths.
+
 ## Error Handling
 
 - If history.sh fails: suggest running an evaluation first

@@ -247,24 +247,33 @@ Store the output as `final_report`.
 
 ---
 
-## Phase 4: Present Results
+## Phase 4: Present Results and Save Reports
 
 If Phase 3 succeeded, present `final_report` to the user. The synthesizer's output IS the final report — display it directly.
 
 After presenting the report:
 
-1. **Save history** (if not already done by synthesizer):
+1. **Save reports to files**: Save English and Korean reports as separate files:
+   ```bash
+   mkdir -p .harness-eval/reports
+   ```
+   - English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-full-en.md`
+   - Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-full-ko.md`
+
+   Use the Write tool to create each file. Split the bilingual report at the `---` separator.
+
+2. **Save history** (if not already done by synthesizer):
    ```bash
    echo '<scoring-json>' | HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save
    ```
    Where `<scoring-json>` is the JSON object with the overall score, grade, mode "full", and all 12 dimension scores (use null for any dimensions that failed).
 
-2. **Update badge**:
+3. **Update badge**:
    ```bash
    HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/badge.sh" "$(pwd)"
    ```
 
-3. Report the evaluation ID from history save to the user.
+4. Report the evaluation ID and saved report file paths to the user.
 
 **If history save or badge update fails**: Warn the user but do NOT suppress the report. The report is the primary output.
 

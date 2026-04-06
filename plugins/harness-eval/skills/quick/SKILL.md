@@ -67,7 +67,18 @@ You are performing a Quick harness evaluation. This is a fast, checklist-based a
    (다음 단계에 도달하기 위한 3-5개 구체적 개선 사항, 영향도 순)
    ```
 
-5. **Provide actionable guidance**: For each failed check, explain what the user needs to do to fix it in both languages. Be specific — include file paths and example content.
+5. **Save reports to files**: Save the English and Korean reports as separate files in the target project:
+   ```bash
+   mkdir -p .harness-eval/reports
+   ```
+   - English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-quick-en.md`
+   - Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-quick-ko.md`
+
+   Use the Write tool to create each file. The `{NNN}` sequence number should match the evaluation ID from history (e.g., `001`, `002`). If no history exists yet, use `001`.
+
+   After saving, inform the user of the file paths.
+
+6. **Provide actionable guidance**: For each failed check, explain what the user needs to do to fix it in both languages. Be specific — include file paths and example content.
 
 ## Error Handling
 

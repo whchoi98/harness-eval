@@ -143,14 +143,25 @@ Combine all results into a **bilingual** (English + Korean) report. English sect
 (영향도 순으로 정렬된 5-10개 구체적 개선 사항)
 ```
 
-## Phase 5: Save History
+## Phase 5: Save Reports to Files
+
+Save the English and Korean reports as separate files in the target project:
+```bash
+mkdir -p .harness-eval/reports
+```
+- English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-standard-en.md`
+- Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-standard-ko.md`
+
+Use the Write tool to create each file. The `{NNN}` sequence number should match the evaluation ID from history.
+
+## Phase 6: Save History
 
 Save the scoring result to history:
 ```bash
 echo '<scoring-json>' | HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save
 ```
 
-Report the evaluation ID to the user.
+Report the evaluation ID and saved report file paths to the user.
 
 ## Error Handling
 
