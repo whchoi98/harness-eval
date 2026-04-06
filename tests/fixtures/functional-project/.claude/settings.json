@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "command": ".claude/hooks/check-safety.sh" }
+    ],
+    "PostToolUse": [
+      { "matcher": "Write", "command": ".claude/hooks/check-secrets.sh" }
+    ]
+  },
+  "permissions": {
+    "allow": ["Read", "Glob", "Grep"]
+  }
+}
