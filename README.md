@@ -37,11 +37,21 @@ The plugin scores projects across 6 dimensions — correctness, safety, complete
 
 ## Installation
 
-### As a Claude Code Plugin (Recommended)
+### Via Marketplace (Recommended)
+
+```bash
+# Add the marketplace
+claude plugin marketplace add https://github.com/whchoi98/harness-eval-marketplace
+
+# Install the plugin
+claude plugin install harness-eval@harness-eval-marketplace
+```
+
+### Via GitHub URL (Direct)
 
 ```bash
 # Install directly from GitHub
-claude plugin add https://github.com/whchoi98/harness-eval.git
+claude plugin add https://github.com/whchoi98/harness-eval
 ```
 
 After installation, the `/harness-eval` command becomes available in all Claude Code sessions.
@@ -271,11 +281,21 @@ harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계
 
 ## 설치 방법
 
-### Claude Code 플러그인으로 설치 (권장)
+### 마켓플레이스를 통한 설치 (권장)
+
+```bash
+# 마켓플레이스 추가
+claude plugin marketplace add https://github.com/whchoi98/harness-eval-marketplace
+
+# 플러그인 설치
+claude plugin install harness-eval@harness-eval-marketplace
+```
+
+### GitHub URL 직접 설치
 
 ```bash
 # GitHub에서 직접 설치
-claude plugin add https://github.com/whchoi98/harness-eval.git
+claude plugin add https://github.com/whchoi98/harness-eval
 ```
 
 설치 후 모든 Claude Code 세션에서 `/harness-eval` 커맨드를 사용할 수 있습니다.
