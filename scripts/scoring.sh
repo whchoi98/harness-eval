@@ -46,7 +46,11 @@ parse_args() {
     case "$1" in
       --mode)
         shift
-        MODE="${1:-standard}"
+        if [[ $# -eq 0 ]]; then
+          emit_error "--mode requires a value (quick or standard)"
+          exit 2
+        fi
+        MODE="$1"
         if [[ "$MODE" != "quick" && "$MODE" != "standard" ]]; then
           emit_error "Invalid mode: $MODE (must be quick or standard)"
           exit 2
@@ -70,8 +74,9 @@ parse_args() {
   fi
 
   # Resolve to absolute path
+  local original_target="$TARGET"
   TARGET="$(cd "$TARGET" 2>/dev/null && pwd)" || {
-    emit_error "Target directory does not exist: $TARGET"
+    emit_error "Target directory does not exist: $original_target"
     exit 2
   }
 
