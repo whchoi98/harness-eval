@@ -15,17 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add project scaffolding with enhanced CLAUDE.md, module documentation, and Auto-Sync Rules
-- Add development hooks for documentation sync, secret scanning, session context loading, and notifications
-- Add development skills for code review, refactoring, release management, and documentation sync
-- Add development commands: `/review`, `/test-all`, `/deploy`
-- Add development agents: code-reviewer and security-auditor with structured output schemas
-- Add harness validation test suite with 97 tests covering hooks, secret patterns, and plugin structure
-- Add architecture documentation with bilingual support and ASCII diagrams
-- Add developer onboarding guide with prerequisites, setup steps, and troubleshooting
-- Add README.md with bilingual structure and shields.io badges
-- Add secret scanning hook with 17 detection patterns and dangerous command deny list
-- Add MIT License
+- Add bilingual report output — all evaluations generate separate English and Korean reports
+- Save reports to `.harness-eval/reports/eval-{date}-{NNN}-{mode}-{en|ko}.md` in target project
+- Add individual mode slash commands: `/harness-eval:quick`, `/harness-eval:standard`, `/harness-eval:full`, `/harness-eval:compare`
+- Add `argument-hint: [quick|standard|full|compare]` to main command for UI visibility
+- Add marketplace support — install via `claude plugin marketplace add https://github.com/whchoi98/harness-eval`
+
+### Changed
+
+- **BREAKING:** Restructure as marketplace + plugin monorepo — plugin files moved to `plugins/harness-eval/`
+- **BREAKING:** Adopt Claude Code auto-discovery convention — `plugin.json` contains metadata only, skills use `skills/<name>/SKILL.md` format, hooks registered via `hooks/hooks.json`
 
 ## [0.1.0] - 2026-04-06
 
@@ -62,17 +61,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CLAUDE.md 확장, 모듈 문서, Auto-Sync Rules를 포함한 프로젝트 스캐폴딩 추가
-- 문서 동기화, 시크릿 스캐닝, 세션 컨텍스트 로딩, 알림을 위한 개발용 훅 추가
-- 코드 리뷰, 리팩토링, 릴리스 관리, 문서 동기화를 위한 개발용 스킬 추가
-- 개발용 커맨드 추가: `/review`, `/test-all`, `/deploy`
-- 구조화된 출력 스키마를 갖춘 개발용 에이전트 추가: code-reviewer, security-auditor
-- 훅, 시크릿 패턴, 플러그인 구조를 검증하는 97개 하네스 검증 테스트 스위트 추가
-- 이중 언어 지원 및 ASCII 다이어그램을 포함한 아키텍처 문서 추가
-- 사전 요구 사항, 설정 단계, 트러블슈팅을 포함한 개발자 온보딩 가이드 추가
-- 이중 언어 구조 및 shields.io 뱃지를 포함한 README.md 추가
-- 17개 탐지 패턴을 갖춘 시크릿 스캐닝 훅 및 위험 명령 deny 목록 추가
-- MIT 라이선스 추가
+- 이중 언어 리포트 출력 추가 — 모든 평가가 영어/한국어 별도 리포트 생성
+- 대상 프로젝트의 `.harness-eval/reports/eval-{날짜}-{순번}-{모드}-{en|ko}.md`에 리포트 파일 저장
+- 개별 모드 슬래시 커맨드 추가: `/harness-eval:quick`, `/harness-eval:standard`, `/harness-eval:full`, `/harness-eval:compare`
+- 메인 커맨드에 `argument-hint: [quick|standard|full|compare]` 추가하여 UI에서 옵션 표시
+- 마켓플레이스 지원 추가 — `claude plugin marketplace add https://github.com/whchoi98/harness-eval`로 설치
+
+### Changed
+
+- **BREAKING:** 마켓플레이스 + 플러그인 모노레포 구조로 전환 — 플러그인 파일이 `plugins/harness-eval/`로 이동
+- **BREAKING:** Claude Code 자동 탐색 컨벤션 적용 — `plugin.json`은 메타데이터만 포함, 스킬은 `skills/<name>/SKILL.md` 형식, 훅은 `hooks/hooks.json`으로 등록
 
 ## [0.1.0] - 2026-04-06
 
