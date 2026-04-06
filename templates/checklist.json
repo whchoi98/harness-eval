@@ -1,0 +1,140 @@
+{
+  "version": "1.0",
+  "tiers": {
+    "basic": {
+      "label": "Basic (6.0+)",
+      "weight": 1.0,
+      "items": [
+        {
+          "id": "basic-claude-md",
+          "description": "CLAUDE.md exists",
+          "type": "file_exists",
+          "target": "CLAUDE.md"
+        },
+        {
+          "id": "basic-settings",
+          "description": ".claude/settings.json or .claude/settings.local.json exists",
+          "type": "file_exists_any",
+          "targets": [".claude/settings.json", ".claude/settings.local.json"]
+        },
+        {
+          "id": "basic-hook-registered",
+          "description": "At least 1 hook registered in settings",
+          "type": "json_array_min",
+          "target": ".claude/settings.json",
+          "path": ".hooks",
+          "min": 1
+        },
+        {
+          "id": "basic-command-exists",
+          "description": "At least 1 command file exists",
+          "type": "glob_min",
+          "target": ".claude/commands/*.md",
+          "min": 1
+        }
+      ]
+    },
+    "functional": {
+      "label": "Functional (7.0+)",
+      "weight": 1.5,
+      "items": [
+        {
+          "id": "func-hook-events",
+          "description": "All 4 hook events registered (PreToolUse, PostToolUse, PreCommit, Notification or Stop)",
+          "type": "json_keys_present",
+          "target": ".claude/settings.json",
+          "path": ".hooks",
+          "keys": ["PreToolUse", "PostToolUse"]
+        },
+        {
+          "id": "func-secret-scanning",
+          "description": "Secret scanning hook exists",
+          "type": "grep_match",
+          "target": ".claude/settings.json",
+          "pattern": "secret|AKIA|password|token"
+        },
+        {
+          "id": "func-skills",
+          "description": "At least 2 skill files exist",
+          "type": "glob_min",
+          "target": ".claude/skills/*.md",
+          "min": 2
+        },
+        {
+          "id": "func-agent",
+          "description": "At least 1 agent file exists",
+          "type": "glob_min",
+          "target": ".claude/agents/*.md",
+          "min": 1
+        }
+      ]
+    },
+    "robust": {
+      "label": "Robust (8.0+)",
+      "weight": 2.0,
+      "items": [
+        {
+          "id": "robust-tests",
+          "description": "Automated test directory exists with test files",
+          "type": "glob_min",
+          "target": "tests/**/*test*",
+          "min": 1
+        },
+        {
+          "id": "robust-error-recovery",
+          "description": "Commands contain error recovery sections",
+          "type": "grep_all_files",
+          "target": ".claude/commands/*.md",
+          "pattern": "[Ff]ail|[Ee]rror|[Rr]ollback|[Rr]ecovery"
+        },
+        {
+          "id": "robust-agent-schema",
+          "description": "Agents define output schema or format",
+          "type": "grep_all_files",
+          "target": ".claude/agents/*.md",
+          "pattern": "[Oo]utput|[Ff]ormat|[Ss]chema|[Vv]erdict"
+        },
+        {
+          "id": "robust-deny-list",
+          "description": "Deny list configured in settings",
+          "type": "json_field_exists",
+          "target": ".claude/settings.json",
+          "path": ".permissions.deny"
+        },
+        {
+          "id": "robust-module-claude-md",
+          "description": "Module-level CLAUDE.md files exist (at least 2 total)",
+          "type": "glob_min",
+          "target": "**/CLAUDE.md",
+          "min": 2
+        }
+      ]
+    },
+    "production": {
+      "label": "Production (9.0+)",
+      "weight": 2.5,
+      "items": [
+        {
+          "id": "prod-e2e-tests",
+          "description": "E2E or integration test files exist",
+          "type": "glob_min",
+          "target": "tests/**/*{e2e,integration,integ}*",
+          "min": 1
+        },
+        {
+          "id": "prod-ci-cd",
+          "description": "CI/CD pipeline config exists",
+          "type": "file_exists_any",
+          "targets": [".github/workflows/*.yml", ".github/workflows/*.yaml", ".gitlab-ci.yml", "Jenkinsfile"]
+        },
+        {
+          "id": "prod-migration-guide",
+          "description": "Migration or upgrade guide exists",
+          "type": "grep_match",
+          "target": "*.md",
+          "pattern": "[Mm]igrat|[Uu]pgrad|[Cc]hangelog|CHANGELOG"
+        }
+      ]
+    }
+  }
+}
