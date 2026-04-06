@@ -37,29 +37,41 @@ The plugin scores projects across 6 dimensions — correctness, safety, complete
 
 ## Installation
 
-### Via Marketplace (Recommended)
+### Install
 
 ```bash
-# Register the marketplace
+# 1. Register the marketplace
 claude plugin marketplace add https://github.com/whchoi98/harness-eval
 
-# Install the plugin
+# 2. Install the plugin
 claude plugin install harness-eval@harness-eval
 ```
 
 After installation, the `/harness-eval` command becomes available in all Claude Code sessions.
 
-To verify the installation:
+### Verify
 
 ```bash
-# List installed plugins
+# Check installed plugins
 claude plugin list
 ```
 
-To uninstall:
+### Update
 
 ```bash
+# Refresh marketplace cache and update the plugin
+claude plugin marketplace refresh
+claude plugin install harness-eval@harness-eval
+```
+
+### Uninstall
+
+```bash
+# Remove the plugin
 claude plugin remove harness-eval
+
+# Remove the marketplace (optional)
+claude plugin marketplace remove harness-eval
 ```
 
 ### From Source (For Development)
@@ -68,8 +80,8 @@ claude plugin remove harness-eval
 # Clone the repository
 git clone https://github.com/whchoi98/harness-eval.git
 
-# Navigate to the project directory
-cd harness-eval
+# Navigate to the plugin directory
+cd harness-eval/plugins/harness-eval
 
 # Run the setup script
 bash scripts/setup.sh
@@ -267,29 +279,41 @@ harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계
 
 ## 설치 방법
 
-### 마켓플레이스를 통한 설치 (권장)
+### 설치
 
 ```bash
-# 마켓플레이스 등록
+# 1. 마켓플레이스 등록
 claude plugin marketplace add https://github.com/whchoi98/harness-eval
 
-# 플러그인 설치
+# 2. 플러그인 설치
 claude plugin install harness-eval@harness-eval
 ```
 
 설치 후 모든 Claude Code 세션에서 `/harness-eval` 커맨드를 사용할 수 있습니다.
 
-설치 확인:
+### 확인
 
 ```bash
 # 설치된 플러그인 목록 조회
 claude plugin list
 ```
 
-제거:
+### 업데이트
 
 ```bash
+# 마켓플레이스 캐시 갱신 후 플러그인 재설치
+claude plugin marketplace refresh
+claude plugin install harness-eval@harness-eval
+```
+
+### 삭제
+
+```bash
+# 플러그인 제거
 claude plugin remove harness-eval
+
+# 마켓플레이스 제거 (선택)
+claude plugin marketplace remove harness-eval
 ```
 
 ### 소스에서 설치 (개발용)
@@ -298,8 +322,8 @@ claude plugin remove harness-eval
 # 저장소 클론
 git clone https://github.com/whchoi98/harness-eval.git
 
-# 프로젝트 디렉토리로 이동
-cd harness-eval
+# 플러그인 디렉토리로 이동
+cd harness-eval/plugins/harness-eval
 
 # 설정 스크립트 실행
 bash scripts/setup.sh
