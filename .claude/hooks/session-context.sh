@@ -5,9 +5,9 @@
 echo "=== Project Context ==="
 
 # Plugin detection
-if [ -f "plugin.json" ]; then
-    NAME=$(python3 -c "import json; print(json.load(open('plugin.json')).get('name',''))" 2>/dev/null)
-    VERSION=$(python3 -c "import json; print(json.load(open('plugin.json')).get('version',''))" 2>/dev/null)
+if [ -f ".claude-plugin/plugin.json" ]; then
+    NAME=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json')).get('name',''))" 2>/dev/null)
+    VERSION=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json')).get('version',''))" 2>/dev/null)
     echo "Project: $NAME v$VERSION (Claude Code Plugin)"
 elif [ -f "package.json" ]; then
     NAME=$(python3 -c "import json; print(json.load(open('package.json')).get('name',''))" 2>/dev/null)

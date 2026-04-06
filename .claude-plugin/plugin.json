@@ -2,6 +2,13 @@
   "name": "harness-eval",
   "version": "0.1.0",
   "description": "Evaluate Claude Code harness engineering quality. Quick/Standard/Full 3-tier evaluation with multi-agent design review, history tracking, and badge generation.",
+  "author": {
+    "name": "WooHyung Choi",
+    "email": "whchoi98@gmail.com"
+  },
+  "repository": "https://github.com/whchoi98/harness-eval",
+  "homepage": "https://github.com/whchoi98/harness-eval",
+  "license": "MIT",
   "skills": [
     { "name": "quick", "path": "skills/quick.md" },
     { "name": "standard", "path": "skills/standard.md" },

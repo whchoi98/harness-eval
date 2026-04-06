@@ -11,6 +11,7 @@ harness-eval: Claude Code harness engineering quality evaluator plugin. Provides
 
 ## Project Structure
 ```
+.claude-plugin/     - Plugin manifest (plugin.json with marketplace metadata)
 agents/             - Subagents for Full mode (collector, evaluators, synthesizer)
 commands/           - User-facing slash command (/harness-eval)
 docs/               - Architecture docs, ADRs, runbooks
@@ -37,7 +38,7 @@ tests/              - Test suite with 4-level fixtures
 - Exit codes: 0 = success, 1 = issues found, 2 = script error
 - All scripts check for `jq` dependency at startup
 - Bilingual: Korean primary, English secondary in docs
-- Plugin paths in plugin.json must match actual file locations
+- Plugin paths in `.claude-plugin/plugin.json` must match actual file locations
 
 ## Key Commands
 ```bash
@@ -54,7 +55,7 @@ bash scripts/badge.sh <target>
 
 # Validate JSON
 python3 -m json.tool templates/checklist.json
-python3 -m json.tool plugin.json
+python3 -m json.tool .claude-plugin/plugin.json
 
 # Check bash syntax
 find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
@@ -81,8 +82,8 @@ After exiting Plan mode (`/plan`), before starting implementation:
 - Agent added/changed in `agents/` -> Update `agents/CLAUDE.md`
 - Skill added/changed in `skills/` -> Update `skills/CLAUDE.md`
 - Template changed in `templates/` -> Update `templates/CLAUDE.md`
-- Hook added/changed -> Update `hooks/CLAUDE.md` and verify `plugin.json` registration
-- plugin.json changed -> Verify all referenced paths exist
+- Hook added/changed -> Update `hooks/CLAUDE.md` and verify `.claude-plugin/plugin.json` registration
+- `.claude-plugin/plugin.json` changed -> Verify all referenced paths exist
 
 ### ADR Numbering
 Find the highest number in `docs/decisions/ADR-*.md` and increment by 1.

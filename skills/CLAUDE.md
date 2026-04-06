@@ -10,7 +10,7 @@ User-facing evaluation entry points. Each skill defines an evaluation mode that 
 - `compare.md` — Comparative analysis between two evaluation results
 
 ## Rules
-- Skills are registered in `plugin.json` under the `skills` array
+- Skills are registered in `.claude-plugin/plugin.json` under the `skills` array
 - Each skill must define clear steps Claude follows sequentially
 - Quick/Standard invoke scripts directly; Full spawns agents
 - All skills reference `templates/checklist.json` for check definitions

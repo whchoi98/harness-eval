@@ -22,7 +22,7 @@ bash scripts/setup.sh
 bash tests/run-all.sh
 
 # Validate JSON
-python3 -m json.tool plugin.json
+python3 -m json.tool .claude-plugin/plugin.json
 python3 -m json.tool templates/checklist.json
 
 # Check bash syntax
@@ -57,7 +57,7 @@ Mock projects at 4 maturity levels in `tests/fixtures/`:
 - `production-project` — CI/CD, changelog, comprehensive docs
 
 ### Plugin Structure
-- `plugin.json` — Manifest registering all skills, agents, commands, hooks
+- `.claude-plugin/plugin.json` — Manifest registering all skills, agents, commands, hooks
 - Skills are user-facing evaluation entry points
 - Agents are spawned by the Full skill for parallel analysis
 - Commands provide the `/harness-eval` slash command

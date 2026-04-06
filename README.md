@@ -1,7 +1,7 @@
 # harness-eval
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](plugin.json)
+[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](.claude-plugin/plugin.json)
 [![Bash](https://img.shields.io/badge/Bash-4%2B-brightgreen.svg)](#prerequisites)
 [![English](https://img.shields.io/badge/lang-English-blue.svg)](#english)
 [![한국어](https://img.shields.io/badge/lang-한국어-red.svg)](#한국어)
@@ -121,7 +121,8 @@ bash scripts/badge.sh /path/to/target-project
 
 ```
 harness-eval/
-├── plugin.json              # Plugin manifest (skills, agents, commands, hooks)
+├── .claude-plugin/
+│   └── plugin.json          # Plugin manifest (skills, agents, commands, hooks)
 ├── CLAUDE.md                # Project context and conventions
 ├── LICENSE                  # MIT License
 │
@@ -203,7 +204,7 @@ bash tests/harness-run-all.sh structure   # Structure tests only
 find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
 
 # Validate all JSON files
-python3 -m json.tool plugin.json
+python3 -m json.tool .claude-plugin/plugin.json
 python3 -m json.tool templates/checklist.json
 ```
 
@@ -354,7 +355,8 @@ bash scripts/badge.sh /path/to/target-project
 
 ```
 harness-eval/
-├── plugin.json              # 플러그인 매니페스트 (스킬, 에이전트, 커맨드, 훅)
+├── .claude-plugin/
+│   └── plugin.json          # 플러그인 매니페스트 (스킬, 에이전트, 커맨드, 훅)
 ├── CLAUDE.md                # 프로젝트 컨텍스트 및 규칙
 ├── LICENSE                  # MIT 라이선스
 │
@@ -436,7 +438,7 @@ bash tests/harness-run-all.sh structure   # 구조 테스트만
 find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
 
 # 모든 JSON 파일 유효성 검증
-python3 -m json.tool plugin.json
+python3 -m json.tool .claude-plugin/plugin.json
 python3 -m json.tool templates/checklist.json
 ```
 

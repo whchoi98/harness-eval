@@ -22,7 +22,7 @@ Automate the release process with validation checks.
 - Add date and version header
 
 ### 4. Create Release
-- Update version in `plugin.json`
+- Update version in `.claude-plugin/plugin.json`
 - Create git tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
 - Generate release notes
 

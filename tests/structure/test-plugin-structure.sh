@@ -2,30 +2,36 @@
 # Validates plugin structure integrity: manifests, file existence, CLAUDE.md sections.
 
 # --- Manifest validation ---
-assert_json_valid "plugin.json is valid JSON" "plugin.json"
+PLUGIN_MANIFEST=".claude-plugin/plugin.json"
+assert_file_exists ".claude-plugin/plugin.json exists" "$PLUGIN_MANIFEST"
+assert_json_valid "plugin.json is valid JSON" "$PLUGIN_MANIFEST"
 assert_json_valid "settings.json is valid JSON" ".claude/settings.json"
 assert_json_valid "checklist.json is valid JSON" "templates/checklist.json"
 
-# --- plugin.json path validation ---
-PLUGIN_JSON=$(cat plugin.json)
+# --- plugin.json required fields ---
+PLUGIN_JSON=$(cat "$PLUGIN_MANIFEST")
+assert_contains "plugin.json has author field" "$PLUGIN_JSON" '"author"'
+assert_contains "plugin.json has repository field" "$PLUGIN_JSON" '"repository"'
+assert_contains "plugin.json has license field" "$PLUGIN_JSON" '"license"'
 
+# --- plugin.json path validation ---
 # Check all skill paths exist
-for skill_path in $(python3 -c "import json; [print(s['path']) for s in json.load(open('plugin.json')).get('skills',[])]" 2>/dev/null); do
+for skill_path in $(python3 -c "import json; [print(s['path']) for s in json.load(open('$PLUGIN_MANIFEST')).get('skills',[])]" 2>/dev/null); do
     assert_file_exists "Skill path: $skill_path" "$skill_path"
 done
 
 # Check all agent paths exist
-for agent_path in $(python3 -c "import json; [print(a['path']) for a in json.load(open('plugin.json')).get('agents',[])]" 2>/dev/null); do
+for agent_path in $(python3 -c "import json; [print(a['path']) for a in json.load(open('$PLUGIN_MANIFEST')).get('agents',[])]" 2>/dev/null); do
     assert_file_exists "Agent path: $agent_path" "$agent_path"
 done
 
 # Check all command paths exist
-for cmd_path in $(python3 -c "import json; [print(c['path']) for c in json.load(open('plugin.json')).get('commands',[])]" 2>/dev/null); do
+for cmd_path in $(python3 -c "import json; [print(c['path']) for c in json.load(open('$PLUGIN_MANIFEST')).get('commands',[])]" 2>/dev/null); do
     assert_file_exists "Command path: $cmd_path" "$cmd_path"
 done
 
 # Check all hook paths exist
-for hook_path in $(python3 -c "import json; [print(h['path']) for h in json.load(open('plugin.json')).get('hooks',[])]" 2>/dev/null); do
+for hook_path in $(python3 -c "import json; [print(h['path']) for h in json.load(open('$PLUGIN_MANIFEST')).get('hooks',[])]" 2>/dev/null); do
     assert_file_exists "Hook path: $hook_path" "$hook_path"
 done
 

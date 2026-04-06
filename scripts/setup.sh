@@ -37,7 +37,7 @@ fi
 
 # Validate JSON files
 echo "Validating JSON files..."
-python3 -m json.tool plugin.json > /dev/null && echo "  plugin.json: OK" || echo "  plugin.json: INVALID"
+python3 -m json.tool .claude-plugin/plugin.json > /dev/null && echo "  .claude-plugin/plugin.json: OK" || echo "  .claude-plugin/plugin.json: INVALID"
 python3 -m json.tool templates/checklist.json > /dev/null && echo "  templates/checklist.json: OK" || echo "  templates/checklist.json: INVALID"
 
 echo ""

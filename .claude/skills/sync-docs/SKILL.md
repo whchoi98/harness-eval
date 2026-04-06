@@ -41,8 +41,8 @@ Output quality report with grades (A-F) before making changes.
 - Verify runbook coverage against project characteristics
 - Flag stale ADRs and outdated runbooks
 
-### 6. plugin.json Sync
-- Verify all paths in plugin.json point to existing files
+### 6. .claude-plugin/plugin.json Sync
+- Verify all paths in .claude-plugin/plugin.json point to existing files
 - Verify version consistency
 
 ### 7. Report
