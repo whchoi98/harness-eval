@@ -1,0 +1,24 @@
+{
+  "name": "harness-eval",
+  "version": "0.1.0",
+  "description": "Evaluate Claude Code harness engineering quality. Quick/Standard/Full 3-tier evaluation with multi-agent design review, history tracking, and badge generation.",
+  "skills": [
+    { "name": "quick", "path": "skills/quick.md" },
+    { "name": "standard", "path": "skills/standard.md" },
+    { "name": "full", "path": "skills/full.md" },
+    { "name": "compare", "path": "skills/compare.md" }
+  ],
+  "agents": [
+    { "name": "collector", "path": "agents/collector.md" },
+    { "name": "safety-evaluator", "path": "agents/safety-evaluator.md" },
+    { "name": "completeness-evaluator", "path": "agents/completeness-evaluator.md" },
+    { "name": "design-evaluator", "path": "agents/design-evaluator.md" },
+    { "name": "synthesizer", "path": "agents/synthesizer.md" }
+  ],
+  "commands": [
+    { "name": "harness-eval", "path": "commands/harness-eval.md" }
+  ],
+  "hooks": [
+    { "event": "Stop", "path": "hooks/post-eval-badge.sh" }
+  ]
+}
