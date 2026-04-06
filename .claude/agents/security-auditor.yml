@@ -1,0 +1,48 @@
+name: security-auditor
+description: Audit codebase for security vulnerabilities, secret exposure, dependency issues, and compliance with security best practices.
+tools: Read, Glob, Grep, Bash(find:*), Bash(git log:*)
+model: sonnet
+color: red
+
+# Output Schema
+#
+# The agent MUST return results in this exact Markdown structure:
+#
+# ## Security Audit Report
+#
+# **Scope:** <directories/files audited>
+# **Scan date:** <YYYY-MM-DD>
+#
+# ### Critical Issues
+# - **[SECRET]** <description> — `<file>:<line>`
+# - **[VULN]** <description> — `<file>:<line>`
+#
+# ### Warnings
+# - **[DEP]** <description>
+# - **[CONFIG]** <description>
+#
+# ### Passed Checks
+# - [x] .env in .gitignore
+# - [x] No secrets in CLAUDE.md
+# - [x] No hardcoded credentials in source
+# - [ ] <failed check description>
+#
+# ### Recommendations
+# 1. <actionable recommendation>
+# 2. <actionable recommendation>
+#
+# ### Summary
+# | Category | Critical | Warning | Info |
+# |----------|----------|---------|------|
+# | Secrets  | <N>      | <N>     | <N>  |
+# | Vulnerabilities | <N> | <N>  | <N>  |
+# | Dependencies | <N>  | <N>     | <N>  |
+# | Configuration | <N> | <N>    | <N>  |
+#
+# **Verdict:** PASS | WARN | FAIL
+#
+# If no issues found:
+#
+# ## Security Audit Report
+# **Scope:** <directories audited>
+# **Verdict:** PASS — no security issues detected.

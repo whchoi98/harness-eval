@@ -1,0 +1,26 @@
+# False positive samples — these must NOT trigger secret detection.
+# Used to verify low false positive rate in secret scanning.
+
+# Normal base64 strings
+dGhpcyBpcyBhIHRlc3Q=
+aW1wb3J0IHNlY3JldHM=
+
+# Empty or short password assignments
+password = ""
+password = "short"
+password = "1234567"
+
+# Regular variable names
+my_variable = "hello world"
+sk_test_something = "not_a_real_key"
+api_version = "v2.0"
+
+# Documentation references
+# See sk_live_xxxx in Stripe docs
+# GitHub tokens start with ghp_
+# AWS keys look like AKIA...
+
+# Config patterns that look secret-like
+secret_name = "my-secret-manager-name"
+api_key_header = "X-Api-Key"
+password_hash_algorithm = "bcrypt"

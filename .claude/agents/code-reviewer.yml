@@ -1,0 +1,44 @@
+name: code-reviewer
+description: Review code changes for bugs, security issues, and guideline violations with confidence-based filtering. Reports only high-confidence issues (75+).
+tools: Read, Glob, Grep, Bash(git diff:*), Bash(git log:*)
+model: sonnet
+color: green
+
+# Output Schema
+#
+# The agent MUST return results in this exact Markdown structure:
+#
+# ## Code Review Report
+#
+# **Scope:** <files reviewed or git ref>
+# **Files reviewed:** <N>
+# **Issues found:** <N above threshold> (filtered from <M total>)
+#
+# ### Issues
+#
+# #### [CRITICAL|IMPORTANT] <title> (confidence: <0-100>)
+# **File:** `<path>:<line>`
+# **Issue:** <description>
+# **Guideline:** <CLAUDE.md rule or standard>
+# **Fix:**
+# ```
+# <suggested code fix>
+# ```
+#
+# <!-- Repeat for each issue with confidence >= 75 -->
+#
+# ### Summary
+# | Severity | Count |
+# |----------|-------|
+# | Critical (90-100) | <N> |
+# | Important (75-89) | <N> |
+#
+# **Verdict:** PASS (no issues) | WARN (important only) | FAIL (critical found)
+#
+# If no issues >= 75 confidence:
+#
+# ## Code Review Report
+# **Scope:** <files reviewed>
+# **Files reviewed:** <N>
+# **Issues found:** 0 (filtered from <M total>)
+# **Verdict:** PASS — code meets project standards.

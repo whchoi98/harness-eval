@@ -1,0 +1,29 @@
+# Environment
+.env
+*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node (if ever needed)
+node_modules/
+
+# Test artifacts
+tests/tmp/
+*.log
+
+# Evaluation output
+.harness-eval-history/
