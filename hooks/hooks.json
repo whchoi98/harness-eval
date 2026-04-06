@@ -1,0 +1,16 @@
+{
+  "description": "harness-eval plugin hooks - post-evaluation badge generation",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/post-eval-badge.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
