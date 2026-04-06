@@ -34,7 +34,7 @@ assert_eq "check-doc-sync: empty path produces no output" "" "$OUTPUT"
 # session-context: should output project info
 OUTPUT=$(bash .claude/hooks/session-context.sh 2>&1)
 assert_contains "session-context: shows project header" "$OUTPUT" "Project Context"
-assert_contains "session-context: detects plugin" "$OUTPUT" "harness-eval"
+assert_contains "session-context: detects marketplace" "$OUTPUT" "harness-eval"
 
 # notify: no webhook URL should exit silently
 OUTPUT=$(CLAUDE_NOTIFY_WEBHOOK="" bash .claude/hooks/notify.sh "test" "msg" 2>&1)

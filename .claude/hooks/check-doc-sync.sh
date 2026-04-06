@@ -6,8 +6,8 @@
 FILE_PATH="${1:-}"
 [ -z "$FILE_PATH" ] && exit 0
 
-# Plugin source directories (adapted for harness-eval)
-SOURCE_ROOTS="scripts agents skills commands hooks templates tests"
+# Plugin source directories (adapted for harness-eval monorepo)
+SOURCE_ROOTS="plugins/harness-eval/scripts plugins/harness-eval/agents plugins/harness-eval/skills plugins/harness-eval/commands plugins/harness-eval/hooks plugins/harness-eval/templates plugins/harness-eval/tests"
 
 for ROOT in $SOURCE_ROOTS; do
     if [[ "$FILE_PATH" == ${ROOT}/* ]]; then

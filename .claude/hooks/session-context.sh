@@ -4,11 +4,11 @@
 
 echo "=== Project Context ==="
 
-# Plugin detection
-if [ -f ".claude-plugin/plugin.json" ]; then
-    NAME=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json')).get('name',''))" 2>/dev/null)
-    VERSION=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json')).get('version',''))" 2>/dev/null)
-    echo "Project: $NAME v$VERSION (Claude Code Plugin)"
+# Plugin detection (marketplace monorepo)
+if [ -f ".claude-plugin/marketplace.json" ]; then
+    NAME=$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json')).get('name',''))" 2>/dev/null)
+    VERSION=$(python3 -c "import json; m=json.load(open('.claude-plugin/marketplace.json')); print(m.get('metadata',{}).get('version',''))" 2>/dev/null)
+    echo "Project: $NAME v$VERSION (Claude Code Marketplace)"
 elif [ -f "package.json" ]; then
     NAME=$(python3 -c "import json; print(json.load(open('package.json')).get('name',''))" 2>/dev/null)
     echo "Project: $NAME (Node.js)"

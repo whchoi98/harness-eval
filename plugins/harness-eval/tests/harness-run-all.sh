@@ -87,8 +87,10 @@ export -f assert_grep_match assert_grep_no_match
 
 FILTER="${1:-}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-cd "$PROJECT_ROOT"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$PLUGIN_ROOT/../.." && pwd)"
+export PLUGIN_ROOT REPO_ROOT
+cd "$REPO_ROOT"
 
 echo -e "${CYAN}=== Harness Validation Test Suite ===${NC}"
 echo ""

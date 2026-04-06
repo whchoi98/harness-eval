@@ -40,18 +40,11 @@ The plugin scores projects across 6 dimensions — correctness, safety, complete
 ### Via Marketplace (Recommended)
 
 ```bash
-# Add the marketplace
-claude plugin marketplace add https://github.com/whchoi98/harness-eval-marketplace
+# Register the marketplace
+claude plugin marketplace add https://github.com/whchoi98/harness-eval
 
 # Install the plugin
-claude plugin install harness-eval@harness-eval-marketplace
-```
-
-### Via GitHub URL (Direct)
-
-```bash
-# Install directly from GitHub
-claude plugin add https://github.com/whchoi98/harness-eval
+claude plugin install harness-eval@harness-eval
 ```
 
 After installation, the `/harness-eval` command becomes available in all Claude Code sessions.
@@ -130,95 +123,88 @@ bash scripts/badge.sh /path/to/target-project
 ## Project Structure
 
 ```
-harness-eval/
+harness-eval/                            # Marketplace + Plugin monorepo
 ├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest (skills, agents, commands, hooks)
-├── CLAUDE.md                # Project context and conventions
-├── LICENSE                  # MIT License
+│   └── marketplace.json                 # Marketplace catalog
+├── README.md
+├── CHANGELOG.md
+├── LICENSE
 │
-├── scripts/                 # Deterministic evaluation scripts
-│   ├── scoring.sh           # Checklist-based scoring engine
-│   ├── static-analysis.sh   # Syntax, validity, permissions checks
-│   ├── history.sh           # Evaluation history and trend analysis
-│   ├── badge.sh             # Score-to-badge conversion (A+ ~ F)
-│   ├── setup.sh             # New developer setup
-│   └── install-hooks.sh     # Git hooks installer
+├── plugins/harness-eval/                # Plugin root
+│   ├── .claude-plugin/
+│   │   └── plugin.json                  # Plugin manifest (metadata only)
+│   ├── CLAUDE.md                        # Project context and conventions
+│   │
+│   ├── scripts/                         # Deterministic evaluation scripts
+│   │   ├── scoring.sh                   # Checklist-based scoring engine
+│   │   ├── static-analysis.sh           # Syntax, validity, permissions checks
+│   │   ├── history.sh                   # Evaluation history and trend analysis
+│   │   └── badge.sh                     # Score-to-badge conversion (A+ ~ F)
+│   │
+│   ├── agents/                          # Subagents for Full mode evaluation
+│   │   ├── collector.md                 # Target project data gathering
+│   │   ├── safety-evaluator.md          # Tool scope and secret safety
+│   │   ├── completeness-evaluator.md    # Coverage and error recovery
+│   │   ├── design-evaluator.md          # Architecture quality review
+│   │   └── synthesizer.md               # Result aggregation and reporting
+│   │
+│   ├── skills/                          # User-facing evaluation entry points
+│   │   ├── quick/SKILL.md               # Fast checklist evaluation
+│   │   ├── standard/SKILL.md            # Standard analysis evaluation
+│   │   ├── full/SKILL.md                # Multi-agent orchestrator
+│   │   └── compare/SKILL.md             # Comparative analysis
+│   │
+│   ├── commands/                        # Slash command definition
+│   │   └── harness-eval.md              # /harness-eval command router
+│   │
+│   ├── hooks/                           # Plugin-provided hooks
+│   │   ├── hooks.json                   # Hook event registration
+│   │   └── post-eval-badge.sh           # Auto badge on evaluation completion
+│   │
+│   ├── templates/                       # Evaluation templates
+│   │   ├── checklist.json               # Check definitions (Quick/Standard)
+│   │   ├── report-full.md               # Full report template
+│   │   └── report-component.md          # Component report template
+│   │
+│   ├── tests/                           # Automated test suite
+│   │   ├── test-scoring.sh              # Scoring script tests (15 tests)
+│   │   ├── test-static-analysis.sh      # Static analysis tests (23 tests)
+│   │   ├── test-history.sh              # History management tests (19 tests)
+│   │   ├── harness-run-all.sh           # Harness validation runner
+│   │   ├── hooks/                       # Hook validation tests
+│   │   ├── structure/                   # Plugin structure tests
+│   │   └── fixtures/                    # 4-level maturity mock projects
+│   │
+│   └── docs/                            # Documentation
+│       ├── architecture.md              # System architecture (bilingual)
+│       ├── onboarding.md                # Developer onboarding guide
+│       ├── decisions/                   # Architecture Decision Records
+│       └── runbooks/                    # Operational runbooks
 │
-├── agents/                  # Subagents for Full mode evaluation
-│   ├── collector.md         # Target project data gathering
-│   ├── safety-evaluator.md  # Tool scope and secret safety
-│   ├── completeness-evaluator.md  # Coverage and error recovery
-│   ├── design-evaluator.md  # Architecture quality review
-│   └── synthesizer.md       # Result aggregation and reporting
-│
-├── skills/                  # User-facing evaluation entry points
-│   ├── quick.md             # Fast checklist evaluation
-│   ├── standard.md          # Standard analysis evaluation
-│   ├── full.md              # Multi-agent orchestrator
-│   └── compare.md           # Comparative analysis
-│
-├── commands/                # Slash command definition
-│   └── harness-eval.md      # /harness-eval command router
-│
-├── hooks/                   # Plugin-provided hooks
-│   └── post-eval-badge.sh   # Auto badge on evaluation completion
-│
-├── templates/               # Evaluation templates
-│   ├── checklist.json       # Check definitions (Quick/Standard)
-│   ├── report-full.md       # Full report template
-│   └── report-component.md  # Component report template
-│
-├── tests/                   # Automated test suite
-│   ├── test-scoring.sh      # Scoring script tests (15 tests)
-│   ├── test-static-analysis.sh  # Static analysis tests (23 tests)
-│   ├── test-history.sh      # History management tests (19 tests)
-│   ├── harness-run-all.sh   # Harness validation runner (97 tests)
-│   ├── hooks/               # Hook validation tests
-│   ├── structure/           # Plugin structure tests
-│   └── fixtures/            # 4-level maturity mock projects
-│       ├── minimal-project/
-│       ├── functional-project/
-│       ├── robust-project/
-│       └── production-project/
-│
-├── docs/                    # Documentation
-│   ├── architecture.md      # System architecture (bilingual)
-│   ├── onboarding.md        # Developer onboarding guide
-│   ├── decisions/           # Architecture Decision Records
-│   └── runbooks/            # Operational runbooks
-│
-└── .claude/                 # Development-time Claude settings
-    ├── settings.json        # Hook registrations and deny list
-    ├── hooks/               # Dev hooks (doc-sync, secret-scan, etc.)
-    ├── skills/              # Dev skills (code-review, refactor, etc.)
-    ├── commands/            # Dev commands (review, test-all, deploy)
-    └── agents/              # Dev agents (code-reviewer, security-auditor)
+└── .claude/                             # Development-time Claude settings
+    ├── settings.json                    # Hook registrations and deny list
+    ├── hooks/                           # Dev hooks (doc-sync, secret-scan, etc.)
+    ├── skills/                          # Dev skills (code-review, refactor, etc.)
+    ├── commands/                        # Dev commands (review, test-all, deploy)
+    └── agents/                          # Dev agents (code-reviewer, security-auditor)
 ```
 
 ## Testing
 
 ```bash
 # Run all evaluation script tests (57 tests)
+cd plugins/harness-eval
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-history.sh
 
-# Run harness validation tests (97 tests)
+# Run harness validation tests
 bash tests/harness-run-all.sh
 
 # Run specific test category
 bash tests/harness-run-all.sh hooks       # Hook tests only
 bash tests/harness-run-all.sh structure   # Structure tests only
-
-# Validate all bash scripts
-find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
-
-# Validate all JSON files
-python3 -m json.tool .claude-plugin/plugin.json
-python3 -m json.tool templates/checklist.json
 ```
-
-Total test coverage: **154 tests** across 4 test suites.
 
 ## Contributing
 
@@ -284,18 +270,11 @@ harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계
 ### 마켓플레이스를 통한 설치 (권장)
 
 ```bash
-# 마켓플레이스 추가
-claude plugin marketplace add https://github.com/whchoi98/harness-eval-marketplace
+# 마켓플레이스 등록
+claude plugin marketplace add https://github.com/whchoi98/harness-eval
 
 # 플러그인 설치
-claude plugin install harness-eval@harness-eval-marketplace
-```
-
-### GitHub URL 직접 설치
-
-```bash
-# GitHub에서 직접 설치
-claude plugin add https://github.com/whchoi98/harness-eval
+claude plugin install harness-eval@harness-eval
 ```
 
 설치 후 모든 Claude Code 세션에서 `/harness-eval` 커맨드를 사용할 수 있습니다.
@@ -374,92 +353,87 @@ bash scripts/badge.sh /path/to/target-project
 ## 프로젝트 구조
 
 ```
-harness-eval/
+harness-eval/                            # 마켓플레이스 + 플러그인 모노레포
 ├── .claude-plugin/
-│   └── plugin.json          # 플러그인 매니페스트 (스킬, 에이전트, 커맨드, 훅)
-├── CLAUDE.md                # 프로젝트 컨텍스트 및 규칙
-├── LICENSE                  # MIT 라이선스
+│   └── marketplace.json                 # 마켓플레이스 카탈로그
+├── README.md
+├── CHANGELOG.md
+├── LICENSE
 │
-├── scripts/                 # 결정론적 평가 스크립트
-│   ├── scoring.sh           # 체크리스트 기반 점수 산출 엔진
-│   ├── static-analysis.sh   # 문법, 유효성, 권한 검사
-│   ├── history.sh           # 평가 이력 및 추세 분석
-│   ├── badge.sh             # 점수→뱃지 변환 (A+ ~ F)
-│   ├── setup.sh             # 신규 개발자 설정
-│   └── install-hooks.sh     # Git 훅 설치기
+├── plugins/harness-eval/                # 플러그인 루트
+│   ├── .claude-plugin/
+│   │   └── plugin.json                  # 플러그인 매니페스트 (메타데이터)
+│   ├── CLAUDE.md                        # 프로젝트 컨텍스트 및 규칙
+│   │
+│   ├── scripts/                         # 결정론적 평가 스크립트
+│   │   ├── scoring.sh                   # 체크리스트 기반 점수 산출 엔진
+│   │   ├── static-analysis.sh           # 문법, 유효성, 권한 검사
+│   │   ├── history.sh                   # 평가 이력 및 추세 분석
+│   │   └── badge.sh                     # 점수→뱃지 변환 (A+ ~ F)
+│   │
+│   ├── agents/                          # Full 모드 서브에이전트
+│   │   ├── collector.md                 # 대상 프로젝트 데이터 수집
+│   │   ├── safety-evaluator.md          # 도구 범위 및 시크릿 안전성
+│   │   ├── completeness-evaluator.md    # 커버리지 및 에러 복구
+│   │   ├── design-evaluator.md          # 아키텍처 품질 리뷰
+│   │   └── synthesizer.md               # 결과 종합 및 보고서 생성
+│   │
+│   ├── skills/                          # 사용자 대면 평가 진입점
+│   │   ├── quick/SKILL.md               # 빠른 체크리스트 평가
+│   │   ├── standard/SKILL.md            # 표준 분석 평가
+│   │   ├── full/SKILL.md                # 멀티 에이전트 오케스트레이터
+│   │   └── compare/SKILL.md             # 비교 분석
+│   │
+│   ├── commands/                        # 슬래시 커맨드 정의
+│   │   └── harness-eval.md              # /harness-eval 커맨드 라우터
+│   │
+│   ├── hooks/                           # 플러그인 제공 훅
+│   │   ├── hooks.json                   # 훅 이벤트 등록
+│   │   └── post-eval-badge.sh           # 평가 완료 시 자동 뱃지 생성
+│   │
+│   ├── templates/                       # 평가 템플릿
+│   │   ├── checklist.json               # 체크 항목 정의 (Quick/Standard)
+│   │   ├── report-full.md               # Full 보고서 템플릿
+│   │   └── report-component.md          # 구성 요소 보고서 템플릿
+│   │
+│   ├── tests/                           # 자동화 테스트 스위트
+│   │   ├── test-scoring.sh              # 점수 산출 테스트 (15개)
+│   │   ├── test-static-analysis.sh      # 정적 분석 테스트 (23개)
+│   │   ├── test-history.sh              # 이력 관리 테스트 (19개)
+│   │   ├── harness-run-all.sh           # 하네스 검증 러너
+│   │   ├── hooks/                       # 훅 검증 테스트
+│   │   ├── structure/                   # 플러그인 구조 테스트
+│   │   └── fixtures/                    # 4단계 성숙도 모의 프로젝트
+│   │
+│   └── docs/                            # 문서
+│       ├── architecture.md              # 시스템 아키텍처 (이중 언어)
+│       ├── onboarding.md                # 개발자 온보딩 가이드
+│       ├── decisions/                   # 아키텍처 결정 기록 (ADR)
+│       └── runbooks/                    # 운영 런북
 │
-├── agents/                  # Full 모드 서브에이전트
-│   ├── collector.md         # 대상 프로젝트 데이터 수집
-│   ├── safety-evaluator.md  # 도구 범위 및 시크릿 안전성
-│   ├── completeness-evaluator.md  # 커버리지 및 에러 복구
-│   ├── design-evaluator.md  # 아키텍처 품질 리뷰
-│   └── synthesizer.md       # 결과 종합 및 보고서 생성
-│
-├── skills/                  # 사용자 대면 평가 진입점
-│   ├── quick.md             # 빠른 체크리스트 평가
-│   ├── standard.md          # 표준 분석 평가
-│   ├── full.md              # 멀티 에이전트 오케스트레이터
-│   └── compare.md           # 비교 분석
-│
-├── commands/                # 슬래시 커맨드 정의
-│   └── harness-eval.md      # /harness-eval 커맨드 라우터
-│
-├── hooks/                   # 플러그인 제공 훅
-│   └── post-eval-badge.sh   # 평가 완료 시 자동 뱃지 생성
-│
-├── templates/               # 평가 템플릿
-│   ├── checklist.json       # 체크 항목 정의 (Quick/Standard)
-│   ├── report-full.md       # Full 보고서 템플릿
-│   └── report-component.md  # 구성 요소 보고서 템플릿
-│
-├── tests/                   # 자동화 테스트 스위트
-│   ├── test-scoring.sh      # 점수 산출 테스트 (15개)
-│   ├── test-static-analysis.sh  # 정적 분석 테스트 (23개)
-│   ├── test-history.sh      # 이력 관리 테스트 (19개)
-│   ├── harness-run-all.sh   # 하네스 검증 러너 (97개)
-│   ├── hooks/               # 훅 검증 테스트
-│   ├── structure/           # 플러그인 구조 테스트
-│   └── fixtures/            # 4단계 성숙도 모의 프로젝트
-│       ├── minimal-project/
-│       ├── functional-project/
-│       ├── robust-project/
-│       └── production-project/
-│
-├── docs/                    # 문서
-│   ├── architecture.md      # 시스템 아키텍처 (이중 언어)
-│   ├── onboarding.md        # 개발자 온보딩 가이드
-│   ├── decisions/           # 아키텍처 결정 기록 (ADR)
-│   └── runbooks/            # 운영 런북
-│
-└── .claude/                 # 개발용 Claude 설정
-    ├── settings.json        # 훅 등록 및 deny 목록
-    ├── hooks/               # 개발용 훅 (doc-sync, secret-scan 등)
-    ├── skills/              # 개발용 스킬 (code-review, refactor 등)
-    ├── commands/            # 개발용 커맨드 (review, test-all, deploy)
-    └── agents/              # 개발용 에이전트 (code-reviewer, security-auditor)
+└── .claude/                             # 개발용 Claude 설정
+    ├── settings.json                    # 훅 등록 및 deny 목록
+    ├── hooks/                           # 개발용 훅 (doc-sync, secret-scan 등)
+    ├── skills/                          # 개발용 스킬 (code-review, refactor 등)
+    ├── commands/                        # 개발용 커맨드 (review, test-all, deploy)
+    └── agents/                          # 개발용 에이전트 (code-reviewer, security-auditor)
 ```
 
 ## 테스트
 
 ```bash
 # 평가 스크립트 테스트 전체 실행 (57개)
+cd plugins/harness-eval
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-history.sh
 
-# 하네스 검증 테스트 실행 (97개)
+# 하네스 검증 테스트 실행
 bash tests/harness-run-all.sh
 
 # 특정 카테고리 테스트
 bash tests/harness-run-all.sh hooks       # 훅 테스트만
 bash tests/harness-run-all.sh structure   # 구조 테스트만
-
-# 모든 bash 스크립트 문법 검증
-find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
-
-# 모든 JSON 파일 유효성 검증
-python3 -m json.tool .claude-plugin/plugin.json
-python3 -m json.tool templates/checklist.json
 ```
 
 전체 테스트 커버리지: 4개 테스트 스위트, **총 154개 테스트**.

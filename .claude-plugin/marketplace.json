@@ -1,0 +1,25 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "harness-eval",
+  "metadata": {
+    "description": "Claude Code plugin for systematic harness engineering quality evaluation",
+    "version": "0.1.0"
+  },
+  "owner": {
+    "name": "WooHyung Choi",
+    "email": "whchoi98@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "harness-eval",
+      "description": "Systematic 3-tier evaluation of Claude Code harness engineering quality with multi-agent design review, history tracking, and badge generation",
+      "version": "0.1.0",
+      "author": {
+        "name": "WooHyung Choi",
+        "email": "whchoi98@gmail.com"
+      },
+      "source": "./plugins/harness-eval",
+      "category": "development-tools"
+    }
+  ]
+}
