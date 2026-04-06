@@ -1,5 +1,6 @@
 ---
 description: Evaluate Claude Code harness engineering quality
+argument-hint: [quick|standard|full|compare]
 allowed-tools: Read, Glob, Grep, Bash, Agent
 ---
 
