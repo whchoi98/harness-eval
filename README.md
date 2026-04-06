@@ -55,22 +55,48 @@ Or from inside a Claude Code session:
 
 ### Verify
 
+From the terminal:
+
 ```bash
 claude plugin list
 ```
 
+Or from inside a Claude Code session:
+
+```
+/plugin list
+```
+
 ### Update
+
+From the terminal:
 
 ```bash
 claude plugin marketplace refresh
 claude plugin install harness-eval@harness-eval
 ```
 
+Or from inside a Claude Code session:
+
+```
+/plugin marketplace refresh
+/plugin install harness-eval@harness-eval
+```
+
 ### Uninstall
+
+From the terminal:
 
 ```bash
 claude plugin remove harness-eval
 claude plugin marketplace remove harness-eval
+```
+
+Or from inside a Claude Code session:
+
+```
+/plugin remove harness-eval
+/plugin marketplace remove harness-eval
 ```
 
 ### From Source (For Development)
@@ -285,22 +311,48 @@ claude plugin install harness-eval@harness-eval
 
 ### 확인
 
+터미널에서:
+
 ```bash
 claude plugin list
 ```
 
+또는 Claude Code 세션 안에서:
+
+```
+/plugin list
+```
+
 ### 업데이트
+
+터미널에서:
 
 ```bash
 claude plugin marketplace refresh
 claude plugin install harness-eval@harness-eval
 ```
 
+또는 Claude Code 세션 안에서:
+
+```
+/plugin marketplace refresh
+/plugin install harness-eval@harness-eval
+```
+
 ### 삭제
+
+터미널에서:
 
 ```bash
 claude plugin remove harness-eval
 claude plugin marketplace remove harness-eval
+```
+
+또는 Claude Code 세션 안에서:
+
+```
+/plugin remove harness-eval
+/plugin marketplace remove harness-eval
 ```
 
 ### 소스에서 설치 (개발용)
