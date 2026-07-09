@@ -41,9 +41,14 @@ Output quality report with grades (A-F) before making changes.
 - Verify runbook coverage against project characteristics
 - Flag stale ADRs and outdated runbooks
 
-### 6. .claude-plugin/plugin.json Sync
-- Verify all paths in .claude-plugin/plugin.json point to existing files
-- Verify version consistency
+### 6. Manifest Sync (monorepo)
+- `plugins/harness-eval/.claude-plugin/plugin.json` is metadata-only (no
+  `skills`/`agents`/`commands`/`hooks` path arrays — those are auto-discovered),
+  so validate the auto-discovered component directories exist instead of checking
+  path arrays.
+- Verify version consistency across all three locations:
+  `plugins/harness-eval/.claude-plugin/plugin.json` (`version`) and
+  `.claude-plugin/marketplace.json` (`metadata.version` and `plugins[].version`).
 
 ### 7. Report
 Output before/after quality scores, anti-patterns detected, and list of all changes.

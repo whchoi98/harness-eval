@@ -6,3 +6,6 @@ allowed-tools: Read, Glob, Grep, Bash
 Run a quick harness evaluation on the current project.
 
 Activate the `quick` skill from this plugin to perform a checklist-based assessment.
+
+<!-- Note: this command and the `quick` skill share the `harness-eval:quick` name (intentional thin-wrapper pattern). See skills/CLAUDE.md for the coexistence rationale. -->
+

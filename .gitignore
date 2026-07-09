@@ -25,5 +25,10 @@ node_modules/
 tests/tmp/
 *.log
 
-# Evaluation output
+# Evaluation output (runtime artifacts written into target projects)
+# The scripts write history, latest.json, and reports under .harness-eval/;
+# an older layout used .harness-eval-history/. Ignore both so generated results
+# (which may embed scanned paths/finding excerpts and are a badge.sh injection
+# vector) are never committed by accident.
+.harness-eval/
 .harness-eval-history/

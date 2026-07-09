@@ -1,7 +1,7 @@
 ---
 description: Evaluate Claude Code harness engineering quality
 argument-hint: [quick|standard|full|compare]
-allowed-tools: Read, Glob, Grep, Bash, Agent
+allowed-tools: Read, Glob, Grep, Bash, Task
 ---
 
 Evaluate the harness engineering quality of the current project.
@@ -27,3 +27,6 @@ Based on the mode, activate the corresponding skill from this plugin:
 - **compare** → Use the `compare` skill
 
 If an unrecognized mode is provided, show the usage information above and list the valid modes.
+
+<!-- Note: the `quick`, `standard`, `full`, and `compare` mode commands share names with the same-named skills under `harness-eval:<mode>`. This is an intentional thin-wrapper pattern — each command activates the corresponding skill. See skills/CLAUDE.md for the coexistence rationale. Subagent dispatch (full mode) uses the `Task` tool. -->
+

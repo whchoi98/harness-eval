@@ -77,7 +77,33 @@ for section in "${SECTIONS[@]}"; do
 done
 
 # --- Module CLAUDE.md coverage ---
-MODULE_DIRS=(scripts agents skills commands hooks templates tests)
+# commands/ and agents/ must NOT contain a CLAUDE.md: Claude Code auto-discovers every
+# *.md under commands/ and agents/ as a component, so a CLAUDE.md there registers a bogus
+# command/agent (decision #8). Their module notes now live in the plugin-root CLAUDE.md.
+# The remaining module dirs are not scanned for components, so they keep their CLAUDE.md.
+MODULE_DIRS=(scripts skills hooks templates tests)
 for dir in "${MODULE_DIRS[@]}"; do
     assert_file_exists "$dir/CLAUDE.md exists" "$P/$dir/CLAUDE.md"
 done
+
+for dir in commands agents; do
+    if [ ! -f "$P/$dir/CLAUDE.md" ]; then
+        pass "$dir/CLAUDE.md absent (avoids auto-discovery pollution)"
+    else
+        fail "$dir/CLAUDE.md absent (avoids auto-discovery pollution)" "$P/$dir/CLAUDE.md must be removed; move its notes into the plugin-root CLAUDE.md"
+    fi
+done
+
+# --- Version consistency across manifests ---
+# marketplace.json metadata.version, marketplace.json plugins[0].version, and
+# plugin.json version must all agree so an install pins a single coherent version.
+MARKETPLACE_MANIFEST=".claude-plugin/marketplace.json"
+if [ -f "$MARKETPLACE_MANIFEST" ] && [ -f "$PLUGIN_MANIFEST" ]; then
+    MP_META_VER=$(jq -r '.metadata.version // "MISSING"' "$MARKETPLACE_MANIFEST" 2>/dev/null || echo "MISSING")
+    MP_PLUGIN_VER=$(jq -r '.plugins[0].version // "MISSING"' "$MARKETPLACE_MANIFEST" 2>/dev/null || echo "MISSING")
+    PLUGIN_VER=$(jq -r '.version // "MISSING"' "$PLUGIN_MANIFEST" 2>/dev/null || echo "MISSING")
+    assert_eq "version: marketplace.metadata.version == plugins[0].version" "$MP_META_VER" "$MP_PLUGIN_VER"
+    assert_eq "version: marketplace plugins[0].version == plugin.json version" "$MP_PLUGIN_VER" "$PLUGIN_VER"
+else
+    fail "version consistency" "marketplace.json or plugin.json manifest not found"
+fi

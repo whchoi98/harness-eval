@@ -85,7 +85,9 @@ parse_args() {
 # Logging helpers (all go to stderr)
 ###############################################################################
 log() { echo "[static-analysis] $*" >&2; }
-emit_error() { echo "{\"error\":\"$*\"}" >&2; }
+# Build the error JSON with jq so messages containing quotes/backslashes
+# (e.g. target paths) stay valid JSON for machine consumers on stderr.
+emit_error() { jq -n --arg msg "$*" '{error:$msg}' >&2; }
 
 ###############################################################################
 # Helper: add_check — append a check result to CHECKS_JSON
@@ -206,9 +208,13 @@ check_hook_file_mapping() {
     return
   fi
 
-  # Extract all command values from hooks
+  # Extract all command values from hooks. Support BOTH schemas:
+  #   - real Claude Code (nested): .hooks.<Event>[] = {matcher, hooks:[{type,command}]}
+  #   - legacy/flat fixture:       .hooks.<Event>[] = {matcher, command}
+  # The `.command // (.hooks[]?.command)` fallback reads whichever is present,
+  # so real projects are no longer flagged with "Hook file missing: null".
   local commands
-  commands="$(jq -r '.hooks | to_entries[] | .value[] | .command' "$settings_file" 2>/dev/null)" || commands=""
+  commands="$(jq -r '.hooks | to_entries[] | .value[] | (.command // (.hooks[]?.command)) // empty' "$settings_file" 2>/dev/null)" || commands=""
 
   if [[ -z "$commands" ]]; then
     add_check "hook-file-mapping" "correctness" "PASS" "No hook commands found"
@@ -218,11 +224,33 @@ check_hook_file_mapping() {
   while IFS= read -r cmd; do
     [[ -z "$cmd" ]] && continue
 
-    # The command might be a path to a file or a complex command string.
-    # Extract the first token (the script path) — handle commands like
-    # ".claude/hooks/check-safety.sh --arg" by splitting on space.
-    local script_path
-    script_path="$(echo "$cmd" | awk '{print $1}')"
+    # A command may be a bare script path ("...x.sh --arg") or an interpreter
+    # invocation ("bash .claude/hooks/x.sh"). Tokenize (read -ra does not
+    # glob-expand, so this is injection-safe) and, if the first token is a
+    # known interpreter, skip it plus any leading flags / env VAR=value
+    # assignments and take the first remaining token as the script path.
+    local -a tokens
+    read -ra tokens <<< "$cmd"
+    [[ ${#tokens[@]} -eq 0 ]] && continue
+
+    local script_path=""
+    case "${tokens[0]}" in
+      bash|sh|zsh|env|python|python3)
+        local i
+        for (( i=1; i<${#tokens[@]}; i++ )); do
+          case "${tokens[$i]}" in
+            -*)  continue ;;   # skip interpreter flags (e.g. -e, -u)
+            *=*) continue ;;   # skip env-style VAR=value assignments
+            *)   script_path="${tokens[$i]}"; break ;;
+          esac
+        done
+        ;;
+      *)
+        script_path="${tokens[0]}"
+        ;;
+    esac
+
+    [[ -z "$script_path" ]] && continue
 
     if [[ -f "$TARGET/$script_path" ]]; then
       add_check "hook-file-mapping" "correctness" "PASS" "Hook file exists: $script_path" "$script_path"
@@ -503,6 +531,34 @@ analyze() {
   timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   local total=$((PASS_COUNT + WARN_COUNT + FAIL_COUNT))
 
+  # Derive the 4 Basic-Quality category scores from the per-check category tags.
+  # Formula: score = 10 * (pass + 0.5*warn) / (pass + warn + fail), rounded to
+  # 1 decimal; a category with 0 checks scores null (never invented). This is
+  # an ADDITIVE top-level `categories` key — existing keys are unchanged.
+  local categories_json
+  categories_json="$(echo "$CHECKS_JSON" | jq -c '
+    def cat_stats(name):
+      ([ .[] | select(.category == name) ]) as $items
+      | ($items | map(select(.status == "PASS")) | length) as $p
+      | ($items | map(select(.status == "WARN")) | length) as $w
+      | ($items | map(select(.status == "FAIL")) | length) as $f
+      | ($p + $w + $f) as $tot
+      | {
+          pass: $p,
+          warn: $w,
+          fail: $f,
+          score: (if $tot == 0 then null
+                  else ( ( ( ($p + (0.5 * $w)) / $tot ) * 100 ) | round ) / 10
+                  end)
+        };
+    {
+      correctness:  cat_stats("correctness"),
+      safety:       cat_stats("safety"),
+      completeness: cat_stats("completeness"),
+      consistency:  cat_stats("consistency")
+    }
+  ')"
+
   jq -n \
     --arg timestamp "$timestamp" \
     --arg project "$TARGET" \
@@ -511,6 +567,7 @@ analyze() {
     --argjson warn "$WARN_COUNT" \
     --argjson fail "$FAIL_COUNT" \
     --argjson total "$total" \
+    --argjson categories "$categories_json" \
     '{
       timestamp: $timestamp,
       project: $project,
@@ -520,7 +577,8 @@ analyze() {
         warn: $warn,
         fail: $fail,
         total: $total
-      }
+      },
+      categories: $categories
     }'
 
   # Exit code: 1 if any issues, 0 if all pass

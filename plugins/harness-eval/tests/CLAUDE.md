@@ -4,10 +4,10 @@
 Automated test suite validating evaluation scripts and plugin structure integrity.
 
 ## Key Files
-- `test-scoring.sh` — Tests scoring.sh against all 4 fixture levels (15 tests)
-- `test-static-analysis.sh` — Tests static-analysis.sh correctness (23 tests)
+- `test-scoring.sh` — Tests scoring.sh against all 4 fixture levels (24 tests)
+- `test-static-analysis.sh` — Tests static-analysis.sh correctness (26 tests)
 - `test-history.sh` — Tests history.sh storage and retrieval (19 tests)
-- `harness-run-all.sh` — Harness validation runner (104 tests: hooks, secret patterns, structure)
+- `harness-run-all.sh` — Harness validation runner (190 total: 121 harness-validation checks for hooks, secret patterns, structure, version, shellcheck + re-runs the 3 eval suites above)
 - `hooks/test-hooks.sh` — Dev hook existence, permissions, registration, behavior tests
 - `hooks/test-secret-patterns.sh` — Secret detection true positive / false positive tests
 - `structure/test-plugin-structure.sh` — Manifest, directory convention, CLAUDE.md coverage tests

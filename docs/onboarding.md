@@ -36,7 +36,7 @@ harness-eval/                  # Monorepo root
 │   ├── skills/                # Evaluation skills (quick, standard, full, compare)
 │   ├── templates/             # Report templates (bilingual)
 │   ├── hooks/                 # Plugin hooks
-│   └── tests/                 # Test suite (160+ tests)
+│   └── tests/                 # Test suite (190 checks via harness-run-all.sh)
 ├── docs/                      # Monorepo-level documentation
 └── scripts/                   # Monorepo-level scripts
 ```
@@ -81,6 +81,8 @@ bash tests/harness-run-all.sh structure
 claude plugin marketplace add https://github.com/whchoi98/harness-eval
 claude plugin install harness-eval@harness-eval
 
-# For development (symlink)
-claude plugin install --path plugins/harness-eval
+# For local development, add this checkout as a local marketplace, then install
+# (run from the repo root, where .claude-plugin/marketplace.json lives)
+claude plugin marketplace add .
+claude plugin install harness-eval@harness-eval
 ```

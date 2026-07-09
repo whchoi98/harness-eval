@@ -1,6 +1,12 @@
 #!/bin/bash
 # Load project context at Claude Code session start.
+# Wired as a Claude Code SessionStart hook in .claude/settings.json.
 # Outputs key project information for immediate context.
+
+# Operate from the project root regardless of the invoking cwd. Claude Code
+# exposes CLAUDE_PROJECT_DIR for hooks; fall back to the current directory
+# (SessionStart delivers no meaningful stdin payload for this hook).
+cd "${CLAUDE_PROJECT_DIR:-$(pwd)}" 2>/dev/null || true
 
 echo "=== Project Context ==="
 

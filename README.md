@@ -1,7 +1,7 @@
 # harness-eval
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](plugins/harness-eval/.claude-plugin/plugin.json)
 [![Bash](https://img.shields.io/badge/Bash-4%2B-brightgreen.svg)](#prerequisites)
 [![English](https://img.shields.io/badge/lang-English-blue.svg)](#english)
 [![한국어](https://img.shields.io/badge/lang-한국어-red.svg)](#한국어)
@@ -119,20 +119,22 @@ Run evaluations from inside a Claude Code session:
 /harness-eval:harness-eval full  # Argument style also works
 ```
 
+> **Trust requirement (Standard and Full modes):** Standard mode's dynamic-analysis phase *executes code from the target project* — its `.claude/hooks/` scripts and its test suite — on your machine. Only run it against a repository you trust. The skill enforces an explicit confirmation gate before executing any target code; to evaluate an untrusted repository without running its code, pass `--static-only` (or `--no-dynamic`), which performs static analysis and scoring only. Quick mode never executes target code.
+
 Run evaluation scripts directly:
 
 ```bash
 # Score a target project
 HARNESS_EVAL_ROOT=$(pwd) bash scripts/scoring.sh /path/to/target-project
-# Output: {"score": 7.2, "grade": "B", "checks": [...]}
+# Output: {"mode": "quick", "scores": {"overall": 7.2, "grade": "B"}, "checklist": {...}, "results": [...], "timestamp": "..."}
 
 # Run static analysis
 HARNESS_EVAL_ROOT=$(pwd) bash scripts/static-analysis.sh /path/to/target-project
-# Output: {"summary": {"pass": 12, "warn": 1, "fail": 0, "total": 13}, ...}
+# Output: {"summary": {"pass": 12, "warn": 1, "fail": 0, "total": 13}, "categories": {...}, ...}
 
-# View evaluation history
-HARNESS_EVAL_ROOT=$(pwd) bash scripts/history.sh list /path/to/target-project
-# Output: [{"id": "eval-2026-04-06-001", "score": 7.2, ...}]
+# View evaluation history (target project first, then subcommand)
+HARNESS_EVAL_ROOT=$(pwd) bash scripts/history.sh /path/to/target-project list
+# Output: [{"id": "eval-2026-04-06-001", "timestamp": "...", "mode": "quick", "overall": 7.2, "grade": "B"}]
 
 # Generate badge
 bash scripts/badge.sh /path/to/target-project
@@ -144,7 +146,8 @@ bash scripts/badge.sh /path/to/target-project
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `HARNESS_EVAL_ROOT` | Path to the harness-eval plugin root directory | (required) |
-| `CLAUDE_NOTIFY_WEBHOOK` | Webhook URL for evaluation completion notifications | (empty, disabled) |
+
+> **Note:** `CLAUDE_NOTIFY_WEBHOOK` is **not** consumed by the installed plugin. It is only read by this repository's development-time hook (`.claude/hooks/notify.sh`, registered on the `Notification` event in `.claude/settings.json`) and has no effect on evaluation runs for plugin users.
 
 ## Project Structure
 
@@ -165,7 +168,9 @@ harness-eval/                            # Marketplace + Plugin monorepo
 │   │   ├── scoring.sh                   # Checklist-based scoring engine
 │   │   ├── static-analysis.sh           # Syntax, validity, permissions checks
 │   │   ├── history.sh                   # Evaluation history and trend analysis
-│   │   └── badge.sh                     # Score-to-badge conversion (A+ ~ F)
+│   │   ├── badge.sh                     # Score-to-badge conversion (A+ ~ F)
+│   │   ├── setup.sh                     # Developer setup entry point
+│   │   └── install-hooks.sh             # Git hook installation
 │   │
 │   ├── agents/                          # Subagents for Full mode evaluation
 │   │   ├── collector.md                 # Target project data gathering
@@ -180,8 +185,12 @@ harness-eval/                            # Marketplace + Plugin monorepo
 │   │   ├── full/SKILL.md                # Multi-agent orchestrator
 │   │   └── compare/SKILL.md             # Comparative analysis
 │   │
-│   ├── commands/                        # Slash command definition
-│   │   └── harness-eval.md              # /harness-eval command router
+│   ├── commands/                        # Slash command definitions
+│   │   ├── harness-eval.md              # /harness-eval command router
+│   │   ├── quick.md                     # /harness-eval:quick
+│   │   ├── standard.md                  # /harness-eval:standard
+│   │   ├── full.md                      # /harness-eval:full
+│   │   └── compare.md                   # /harness-eval:compare
 │   │
 │   ├── hooks/                           # Plugin-provided hooks
 │   │   ├── hooks.json                   # Hook event registration
@@ -193,8 +202,8 @@ harness-eval/                            # Marketplace + Plugin monorepo
 │   │   └── report-component.md          # Component report template
 │   │
 │   ├── tests/                           # Automated test suite
-│   │   ├── test-scoring.sh              # Scoring script tests (15 tests)
-│   │   ├── test-static-analysis.sh      # Static analysis tests (23 tests)
+│   │   ├── test-scoring.sh              # Scoring script tests (24 tests)
+│   │   ├── test-static-analysis.sh      # Static analysis tests (26 tests)
 │   │   ├── test-history.sh              # History management tests (19 tests)
 │   │   ├── harness-run-all.sh           # Harness validation runner
 │   │   ├── hooks/                       # Hook validation tests
@@ -218,7 +227,7 @@ harness-eval/                            # Marketplace + Plugin monorepo
 ## Testing
 
 ```bash
-# Run all evaluation script tests (57 tests)
+# Run all evaluation script tests (69 tests)
 cd plugins/harness-eval
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
@@ -231,6 +240,8 @@ bash tests/harness-run-all.sh
 bash tests/harness-run-all.sh hooks       # Hook tests only
 bash tests/harness-run-all.sh structure   # Structure tests only
 ```
+
+Total coverage: **190 checks** via `harness-run-all.sh` — 121 harness-validation checks (hooks, secret patterns, structure, version consistency, shellcheck) plus the three evaluation-script suites it re-runs (test-scoring 24 + test-static-analysis 26 + test-history 19 = 69). One check (shellcheck lint) is skipped when `shellcheck` is not installed.
 
 ## Contributing
 
@@ -247,7 +258,9 @@ bash tests/harness-run-all.sh structure   # Structure tests only
    ```bash
    git push origin feat/add-new-check
    ```
-5. Open a Pull Request against `main`.
+5. Open a Pull Request against the repository's default branch (`main`).
+
+> **Branch note:** The remote currently has both `main` and `master`, which have diverged. `main` is the intended default and PR target; confirm the current default branch on GitHub before branching, and rebase onto it before opening a PR.
 
 When adding new evaluation checks:
 - Add the check definition to `templates/checklist.json`
@@ -375,20 +388,22 @@ Claude Code 세션 안에서 평가를 실행합니다:
 /harness-eval:harness-eval full  # 인자 방식도 가능
 ```
 
+> **신뢰 요구 사항 (Standard 및 Full 모드):** Standard 모드의 동적 분석 단계는 대상 프로젝트의 코드(`.claude/hooks/` 스크립트와 테스트 스위트)를 사용자의 머신에서 *실제로 실행*합니다. 신뢰할 수 있는 저장소에 대해서만 실행하세요. 스킬은 대상 코드를 실행하기 전에 명시적 확인 게이트를 요구합니다. 신뢰할 수 없는 저장소를 코드 실행 없이 평가하려면 `--static-only`(또는 `--no-dynamic`)를 전달하면 정적 분석과 채점만 수행합니다. Quick 모드는 대상 코드를 실행하지 않습니다.
+
 평가 스크립트를 직접 실행할 수도 있습니다:
 
 ```bash
 # 대상 프로젝트 점수 산출
 HARNESS_EVAL_ROOT=$(pwd) bash scripts/scoring.sh /path/to/target-project
-# 출력: {"score": 7.2, "grade": "B", "checks": [...]}
+# 출력: {"mode": "quick", "scores": {"overall": 7.2, "grade": "B"}, "checklist": {...}, "results": [...], "timestamp": "..."}
 
 # 정적 분석 실행
 HARNESS_EVAL_ROOT=$(pwd) bash scripts/static-analysis.sh /path/to/target-project
-# 출력: {"summary": {"pass": 12, "warn": 1, "fail": 0, "total": 13}, ...}
+# 출력: {"summary": {"pass": 12, "warn": 1, "fail": 0, "total": 13}, "categories": {...}, ...}
 
-# 평가 이력 조회
-HARNESS_EVAL_ROOT=$(pwd) bash scripts/history.sh list /path/to/target-project
-# 출력: [{"id": "eval-2026-04-06-001", "score": 7.2, ...}]
+# 평가 이력 조회 (대상 프로젝트를 먼저, 서브커맨드를 뒤에)
+HARNESS_EVAL_ROOT=$(pwd) bash scripts/history.sh /path/to/target-project list
+# 출력: [{"id": "eval-2026-04-06-001", "timestamp": "...", "mode": "quick", "overall": 7.2, "grade": "B"}]
 
 # 뱃지 생성
 bash scripts/badge.sh /path/to/target-project
@@ -400,7 +415,8 @@ bash scripts/badge.sh /path/to/target-project
 | 변수명 | 설명 | 기본값 |
 |--------|------|--------|
 | `HARNESS_EVAL_ROOT` | harness-eval 플러그인 루트 디렉토리 경로 | (필수) |
-| `CLAUDE_NOTIFY_WEBHOOK` | 평가 완료 알림을 위한 웹훅 URL | (비어 있음, 비활성) |
+
+> **참고:** `CLAUDE_NOTIFY_WEBHOOK`은 설치된 플러그인이 **사용하지 않습니다**. 이 변수는 오직 본 저장소의 개발용 훅(`.claude/hooks/notify.sh`, `.claude/settings.json`의 `Notification` 이벤트에 등록됨)에서만 읽으며, 플러그인 사용자의 평가 실행에는 아무런 영향을 주지 않습니다.
 
 ## 프로젝트 구조
 
@@ -421,7 +437,9 @@ harness-eval/                            # 마켓플레이스 + 플러그인 모
 │   │   ├── scoring.sh                   # 체크리스트 기반 점수 산출 엔진
 │   │   ├── static-analysis.sh           # 문법, 유효성, 권한 검사
 │   │   ├── history.sh                   # 평가 이력 및 추세 분석
-│   │   └── badge.sh                     # 점수→뱃지 변환 (A+ ~ F)
+│   │   ├── badge.sh                     # 점수→뱃지 변환 (A+ ~ F)
+│   │   ├── setup.sh                     # 개발자 설정 진입점
+│   │   └── install-hooks.sh             # Git 훅 설치
 │   │
 │   ├── agents/                          # Full 모드 서브에이전트
 │   │   ├── collector.md                 # 대상 프로젝트 데이터 수집
@@ -437,7 +455,11 @@ harness-eval/                            # 마켓플레이스 + 플러그인 모
 │   │   └── compare/SKILL.md             # 비교 분석
 │   │
 │   ├── commands/                        # 슬래시 커맨드 정의
-│   │   └── harness-eval.md              # /harness-eval 커맨드 라우터
+│   │   ├── harness-eval.md              # /harness-eval 커맨드 라우터
+│   │   ├── quick.md                     # /harness-eval:quick
+│   │   ├── standard.md                  # /harness-eval:standard
+│   │   ├── full.md                      # /harness-eval:full
+│   │   └── compare.md                   # /harness-eval:compare
 │   │
 │   ├── hooks/                           # 플러그인 제공 훅
 │   │   ├── hooks.json                   # 훅 이벤트 등록
@@ -449,8 +471,8 @@ harness-eval/                            # 마켓플레이스 + 플러그인 모
 │   │   └── report-component.md          # 구성 요소 보고서 템플릿
 │   │
 │   ├── tests/                           # 자동화 테스트 스위트
-│   │   ├── test-scoring.sh              # 점수 산출 테스트 (15개)
-│   │   ├── test-static-analysis.sh      # 정적 분석 테스트 (23개)
+│   │   ├── test-scoring.sh              # 점수 산출 테스트 (24개)
+│   │   ├── test-static-analysis.sh      # 정적 분석 테스트 (26개)
 │   │   ├── test-history.sh              # 이력 관리 테스트 (19개)
 │   │   ├── harness-run-all.sh           # 하네스 검증 러너
 │   │   ├── hooks/                       # 훅 검증 테스트
@@ -474,7 +496,7 @@ harness-eval/                            # 마켓플레이스 + 플러그인 모
 ## 테스트
 
 ```bash
-# 평가 스크립트 테스트 전체 실행 (57개)
+# 평가 스크립트 테스트 전체 실행 (69개)
 cd plugins/harness-eval
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
@@ -488,7 +510,7 @@ bash tests/harness-run-all.sh hooks       # 훅 테스트만
 bash tests/harness-run-all.sh structure   # 구조 테스트만
 ```
 
-전체 테스트 커버리지: 4개 테스트 스위트, **총 154개 테스트**.
+전체 테스트 커버리지: `harness-run-all.sh` 기준 **총 190개 체크** — 하네스 검증 체크 121개(훅, 시크릿 패턴, 구조, 버전 일관성, shellcheck)에 더해 러너가 재실행하는 3개 평가 스크립트 스위트(test-scoring 24 + test-static-analysis 26 + test-history 19 = 69). `shellcheck` 미설치 시 1개 체크(shellcheck 린트)는 skip 처리됩니다.
 
 ## 기여 방법
 
@@ -505,7 +527,9 @@ bash tests/harness-run-all.sh structure   # 구조 테스트만
    ```bash
    git push origin feat/add-new-check
    ```
-5. `main` 브랜치를 대상으로 Pull Request를 생성합니다.
+5. 저장소의 기본 브랜치(`main`)를 대상으로 Pull Request를 생성합니다.
+
+> **브랜치 참고:** 현재 원격에는 `main`과 `master`가 모두 존재하며 서로 분기되어 있습니다. `main`이 의도된 기본 브랜치이자 PR 대상입니다. 브랜치를 생성하기 전에 GitHub에서 현재 기본 브랜치를 확인하고, PR을 열기 전에 해당 브랜치 위로 rebase하세요.
 
 새 평가 체크를 추가할 때:
 - `templates/checklist.json`에 체크 정의를 추가합니다

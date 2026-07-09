@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-latest is the required leg (bash 5 + GNU grep with PCRE).
+        # macOS ships bash 3.2 and BSD grep (no -P); it runs as an advisory leg so
+        # portability regressions surface without blocking merges. The macOS leg
+        # installs modern bash + GNU grep/coreutils via Homebrew and puts them first
+        # on PATH. Promote it to required once the toolchain is pinned.
+        include:
+          - os: ubuntu-latest
+            required: true
+          - os: macos-latest
+            required: false
+    continue-on-error: ${{ !matrix.required }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc shellcheck
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install jq bash grep coreutils shellcheck
+          # Put GNU grep (ggrep -> grep) and modern bash ahead of the system ones.
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix grep)/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> "$GITHUB_PATH"
+
+      - name: Tool versions
+        run: |
+          bash --version | head -1
+          jq --version
+          python3 --version
+          shellcheck --version | head -2 || true
+
+      - name: Bash syntax check (bash -n, repo-wide)
+        run: |
+          rc=0
+          while IFS= read -r -d '' f; do
+            if ! bash -n "$f"; then
+              echo "::error file=$f::bash syntax error"
+              rc=1
+            fi
+          done < <(find . -name '*.sh' -not -path './.git/*' -print0)
+          exit "$rc"
+
+      - name: JSON validation (repo-wide)
+        run: |
+          rc=0
+          while IFS= read -r -d '' f; do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::invalid JSON"
+              rc=1
+            fi
+          done < <(find . -name '*.json' -not -path './.git/*' -not -path '*/node_modules/*' -print0)
+          exit "$rc"
+
+      # The three evaluation-script suites, invoked exactly as documented in
+      # plugins/harness-eval/CLAUDE.md, for granular per-suite CI logs.
+      - name: Evaluation suites (scoring / static-analysis / history)
+        working-directory: plugins/harness-eval
+        run: |
+          HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-scoring.sh
+          HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-static-analysis.sh
+          HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-history.sh
+
+      # harness-run-all.sh is the single entry point that runs ALL four suites
+      # (it re-runs the three eval suites with HARNESS_EVAL_ROOT and adds the
+      # hooks/structure/secret-pattern checks) plus the shellcheck stage.
+      - name: Full harness suite (all 4 suites + shellcheck)
+        working-directory: plugins/harness-eval
+        run: bash tests/harness-run-all.sh
+
+  shellcheck:
+    name: shellcheck (advisory, warning-level)
+    runs-on: ubuntu-latest
+    # Advisory: surfaces the warning/info backlog without blocking merges. The
+    # required `test` job already fails on error-severity shellcheck findings via
+    # harness-run-all.sh. Flip continue-on-error off once the backlog is cleared.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint all shell scripts (warning severity)
+        run: |
+          mapfile -d '' files < <(find . -name '*.sh' -not -path './.git/*' -print0 | sort -z)
+          shellcheck -S warning "${files[@]}"

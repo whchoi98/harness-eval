@@ -21,7 +21,7 @@ Run the static analysis script and capture its output:
 HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/static-analysis.sh" "$(pwd)"
 ```
 
-Store the entire output as `static_results`. This JSON contains scores for Correctness, Safety, Completeness, and Consistency.
+Store the entire output as `static_results`. In addition to the per-check `checks`/`summary` data, this JSON provides a top-level `categories` object with a derived 0-10 `score` for each Basic Quality dimension: `categories.correctness.score`, `categories.safety.score`, `categories.completeness.score`, and `categories.consistency.score`. Each category also carries its `pass`/`warn`/`fail` counts. A category's `score` is `null` when it has no checks (never invent a value). The synthesizer reads these `categories.*.score` values directly as the Basic Quality scores.
 
 **If this fails** (exit code 2): Log the error. You may still continue — scoring in Step 1.2 can work independently.
 
@@ -39,9 +39,10 @@ Store the entire output as `score_results`. This JSON contains checklist pass/fa
 
 ### Step 1.3: Collector Agent
 
-Dispatch the collector agent using the Agent tool. This agent scans the project and produces a structured inventory artifact.
+Dispatch the collector agent using the Task tool. This agent scans the project and produces a structured inventory artifact.
 
-Use the **Agent tool** with these parameters:
+Use the **Task tool** with these parameters:
+- **subagent_type**: `harness-eval:collector`
 - **description**: `Collect project artifacts for harness evaluation`
 - **prompt**: Construct the prompt as follows (include the actual values of `static_results` and `score_results` inline):
 
@@ -76,16 +77,19 @@ Store the collector's complete output as `project_artifact`.
 
 ## Phase 2: Parallel Evaluation
 
-**Prerequisite**: Phase 1 completed successfully (all three outputs are available: `static_results`, `score_results`, `project_artifact`).
+**Prerequisite**: `project_artifact` is available (the collector in Step 1.3 succeeded). This is the only hard requirement for Phase 2 — if the collector failed, Step 1.3 error handling has already aborted to the Standard fallback and you never reach this phase.
 
-Dispatch ALL 3 evaluator agents in parallel. Use the Agent tool 3 times in a **single message** so they run concurrently.
+The script outputs from Phase 1 (`static_results`, `score_results`) are NOT required to proceed. If either script failed (per the Step 1.1 / 1.2 "continue on failure" behavior and the Error Handling Summary), substitute the literal marker `SCRIPT_FAILED: <script-name> produced no output` in place of that section when building each agent prompt below. Evaluators must degrade gracefully on a missing script result rather than block.
+
+Dispatch ALL 3 evaluator agents in parallel. Use the Task tool 3 times in a **single message** so they run concurrently.
 
 ### Agent Dispatch Instructions
 
-For each evaluator agent below, use the **Agent tool** with the specified description and prompt. Each prompt must include all 3 artifacts from Phase 1 inline so the agent has full context.
+For each evaluator agent below, use the **Task tool** with the specified `subagent_type`, description, and prompt. Each prompt must include all 3 artifacts from Phase 1 inline (using the `SCRIPT_FAILED` marker for any missing script result) so the agent has full context.
 
 #### 2.1: Safety Evaluator
 
+- **subagent_type**: `harness-eval:safety-evaluator`
 - **description**: `Evaluate safety posture and cost efficiency`
 - **prompt**:
 
@@ -108,6 +112,7 @@ Store the output as `safety_eval_output`.
 
 #### 2.2: Completeness Evaluator
 
+- **subagent_type**: `harness-eval:completeness-evaluator`
 - **description**: `Evaluate actionability, testability, and contract-based testing`
 - **prompt**:
 
@@ -130,6 +135,7 @@ Store the output as `completeness_eval_output`.
 
 #### 2.3: Design Evaluator
 
+- **subagent_type**: `harness-eval:design-evaluator`
 - **description**: `Evaluate architecture quality and design patterns`
 - **prompt**:
 
@@ -168,7 +174,8 @@ Dispatch the synthesizer agent to aggregate all results into the final 12-dimens
 
 ### Step 3.1: Dispatch Synthesizer
 
-Use the **Agent tool** with:
+Use the **Task tool** with:
+- **subagent_type**: `harness-eval:synthesizer`
 - **description**: `Synthesize all evaluation results into final 12-dimension report`
 - **prompt**:
 
@@ -193,7 +200,7 @@ You are the synthesizer agent for harness-eval. Aggregate all evaluation data be
 ## Design Evaluator Output
 <INSERT design_eval_output HERE>
 
-Follow all instructions in your agent definition. Handle any AGENT_FAILED markers by setting those dimensions to null and noting them as missing. Produce the final report in BILINGUAL format (English first, then --- separator, then Korean). Tables, scores, and code are identical in both sections — only prose text differs. After the report, execute the history save and badge update commands.
+Follow all instructions in your agent definition. Handle any AGENT_FAILED markers by setting those dimensions to null and noting them as missing. Produce the final report in BILINGUAL format: the complete English report first, then the token `<!-- LANG:KO -->` alone on its own line, then the complete Korean report (do NOT use a bare `---`, which is ambiguous with the frontmatter and horizontal rules). Tables, scores, and code are identical in both sections — only prose text differs. After the report, execute the history save and badge update commands.
 ```
 
 Store the output as `final_report`.
@@ -260,7 +267,7 @@ After presenting the report:
    - English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-full-en.md`
    - Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-full-ko.md`
 
-   Use the Write tool to create each file. Split the bilingual report at the `---` separator.
+   Use the Write tool to create each file. Split the bilingual report at the `<!-- LANG:KO -->` token (the text before it is the English file, the text after it is the Korean file); each half already repeats the frontmatter so both are self-contained.
 
 2. **Save history** (if not already done by synthesizer):
    ```bash
@@ -268,7 +275,7 @@ After presenting the report:
    ```
    Where `<scoring-json>` is the JSON object with the overall score, grade, mode "full", and all 12 dimension scores (use null for any dimensions that failed).
 
-3. **Update badge**:
+3. **Update badge** (if not already done by synthesizer — like the history save, badge generation is owned by **one** side only to avoid regenerating it twice):
    ```bash
    HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/badge.sh" "$(pwd)"
    ```
@@ -329,4 +336,4 @@ Be thorough and transparent. If any phase had failures, clearly communicate what
 
 ## Language
 
-Always produce the report in both English and Korean. English section first, then a horizontal rule (---), then the Korean section. Tables, scores, file paths, and code blocks are identical in both sections — only the prose text differs. This applies to the final synthesized report, fallback reports, and all error messages shown to the user.
+Always produce the report in both English and Korean. English section first, then the `<!-- LANG:KO -->` token alone on its own line, then the Korean section (do not separate the languages with a bare `---` — it collides with the frontmatter and horizontal rules the report already contains). Tables, scores, file paths, and code blocks are identical in both sections — only the prose text differs. This applies to the final synthesized report, fallback reports, and all error messages shown to the user.

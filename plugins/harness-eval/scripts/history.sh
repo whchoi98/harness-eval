@@ -33,7 +33,9 @@ SUBCMD=""
 # Logging helpers (all go to stderr)
 ###############################################################################
 log() { echo "[history] $*" >&2; }
-emit_error() { echo "{\"error\":\"$*\"}" >&2; }
+# Build the error JSON with jq so messages containing quotes/backslashes
+# (e.g. target paths) stay valid JSON for machine consumers on stderr.
+emit_error() { jq -n --arg msg "$*" '{error:$msg}' >&2; }
 
 ###############################################################################
 # Argument parsing
@@ -177,6 +179,14 @@ cmd_list() {
         shift
         if [[ $# -eq 0 ]]; then
           emit_error "--last requires a numeric argument"
+          exit 2
+        fi
+        # Validate up front: without this, a non-numeric value reaches the
+        # arithmetic test `[[ "$last_n" -gt 0 ]]` below, which under `set -u`
+        # reinterprets it as a variable name and crashes with an "unbound
+        # variable" error (exit 1) instead of the documented usage error.
+        if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+          emit_error "--last requires a non-negative integer, got: $1"
           exit 2
         fi
         last_n="$1"

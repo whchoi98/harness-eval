@@ -39,7 +39,7 @@ Claude Code 하네스는 5개 구성 요소로 이루어지며, 각각이 Claude
 
 ### 2.3 완전성 (Completeness)
 - 모든 이벤트가 커버되는가?
-  - SessionStart, PreCommit, PostToolUse, Notification
+  - PreToolUse, PostToolUse, Stop, Notification
 - 에러 복구 가이드가 있는가?
   - 각 커맨드에 "실패 시" 섹션 존재
   - 롤백 절차 문서화
@@ -79,9 +79,9 @@ Claude Code 하네스는 5개 구성 요소로 이루어지며, 각각이 Claude
 | 9.0-9.4 | A | 프로덕션 준비 | 통합 테스트, 성능 기준, 마이그레이션 가이드 |
 | 8.5-8.9 | A- | 프로덕션 가능 | 에러 복구, 단위 테스트, 출력 스키마 |
 | 8.0-8.4 | B+ | 견고 | 테스트 존재, 도구 범위 강화 |
-| 7.0-7.9 | B/B- | 기능적 | 구조 존재하나 테스트/복구 미흡 |
+| 7.0-7.9 | B | 기능적 | 구조 존재하나 테스트/복구 미흡 |
 | 6.0-6.9 | C | 기본 | 작동하지만 안전장치 부족 |
-| <6.0 | D/F | 불완전 | 핵심 구성 요소 누락 |
+| <6.0 | F | 불완전 | 핵심 구성 요소 누락 |
 
 ### 3.2 종합 점수 산출 (가중 평균)
 
@@ -150,7 +150,7 @@ echo "AKIAIOSFODNN7EXAMPLE" | grep -qP 'AKIA[0-9A-Z]{16}'  # TP
 echo "normal-base64-string" | grep -qP 'AKIA[0-9A-Z]{16}'  # FP (no match)
 
 # 자동화된 테스트 실행
-bash tests/run-all.sh
+bash tests/harness-run-all.sh
 ```
 
 ### 4.3 설계 리뷰 (수동 평가)
@@ -235,32 +235,32 @@ bash tests/run-all.sh
 
 ## 7. 체크리스트 (Quick Assessment)
 
-프로젝트의 하네스 수준을 빠르게 진단하기 위한 체크리스트:
+프로젝트의 하네스 수준을 빠르게 진단하기 위한 체크리스트. **자동 채점(Quick/Standard 모드)의 정본은 `templates/checklist.json`이며, 아래 tier 항목은 그 구성을 반영한다.** `(수동 리뷰)`로 표시된 항목은 `checklist.json`에서 자동 채점되지 않는 심화 기준으로, 설계 리뷰(4.3절)에서 수동 평가한다.
 
-### 기본 (6.0+ 달성)
+### 기본 (6.0+ 달성) — checklist.json `basic` tier
 - [ ] CLAUDE.md 존재
-- [ ] .claude/settings.json 존재
+- [ ] .claude/settings.json 또는 .claude/settings.local.json 존재
 - [ ] 훅 1개 이상 등록
 - [ ] 커맨드 1개 이상 존재
 
-### 기능적 (7.0+ 달성)
-- [ ] 4개 훅 모두 등록 (SessionStart, PreCommit, PostToolUse, Notification)
+### 기능적 (7.0+ 달성) — checklist.json `functional` tier
+- [ ] 핵심 훅 이벤트 등록 (PreToolUse, PostToolUse)
 - [ ] 시크릿 스캐닝 훅 존재
-- [ ] 스킬 2개 이상 정의
+- [ ] 스킬 2개 이상 정의 (flat `*.md` 또는 `<name>/SKILL.md`)
 - [ ] 에이전트 1개 이상 정의
-- [ ] Auto-Sync Rules 문서화
+- [ ] Auto-Sync Rules 문서화 (수동 리뷰)
 
-### 견고 (8.0+ 달성)
+### 견고 (8.0+ 달성) — checklist.json `robust` tier
 - [ ] 자동화된 테스트 존재
 - [ ] 커맨드에 에러 복구 섹션
 - [ ] 에이전트에 출력 스키마 정의
-- [ ] 도구 범위 최소 권한 적용
 - [ ] Deny 목록 설정
-- [ ] 모든 주요 디렉토리에 CLAUDE.md
+- [ ] 모든 주요 디렉토리에 CLAUDE.md (2개 이상)
+- [ ] 도구 범위 최소 권한 적용 (수동 리뷰)
 
-### 프로덕션 (9.0+ 달성)
+### 프로덕션 (9.0+ 달성) — checklist.json `production` tier
 - [ ] 통합 테스트 (E2E)
-- [ ] 성능 벤치마크
 - [ ] CI/CD 파이프라인
 - [ ] 마이그레이션 가이드
-- [ ] SLA 문서
+- [ ] 성능 벤치마크 (수동 리뷰)
+- [ ] SLA 문서 (수동 리뷰)

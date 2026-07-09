@@ -17,7 +17,7 @@ harness-eval is a Claude Code marketplace plugin monorepo that evaluates harness
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Slash Commands | `plugins/harness-eval/commands/` | User-facing entry points (`/harness-eval`, `/quick`, `/standard`, `/full`, `/compare`) |
+| Slash Commands | `plugins/harness-eval/commands/` | User-facing entry points (`/harness-eval`, `/harness-eval:quick`, `/harness-eval:standard`, `/harness-eval:full`, `/harness-eval:compare`) |
 | Report Templates | `plugins/harness-eval/templates/` | Bilingual Markdown report generation (en/ko) |
 | Badge Generator | `plugins/harness-eval/scripts/badge.sh` | Visual grade badge for README embedding |
 
@@ -126,7 +126,7 @@ harness-eval은 3단계 평가 시스템(Quick/Standard/Full)을 통해 하네�
 
 | 컴포넌트 | 위치 | 목적 |
 |----------|------|------|
-| 슬래시 커맨드 | `plugins/harness-eval/commands/` | 사용자 진입점 (`/harness-eval`, `/quick`, `/standard`, `/full`, `/compare`) |
+| 슬래시 커맨드 | `plugins/harness-eval/commands/` | 사용자 진입점 (`/harness-eval`, `/harness-eval:quick`, `/harness-eval:standard`, `/harness-eval:full`, `/harness-eval:compare`) |
 | 리포트 템플릿 | `plugins/harness-eval/templates/` | 이중언어 Markdown 리포트 생성 (en/ko) |
 | 배지 생성기 | `plugins/harness-eval/scripts/badge.sh` | README 삽입용 등급 배지 |
 
