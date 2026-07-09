@@ -19,12 +19,12 @@ elif [ -f "package.json" ]; then
     NAME=$(python3 -c "import json; print(json.load(open('package.json')).get('name',''))" 2>/dev/null)
     echo "Project: $NAME (Node.js)"
 elif [ -f "pyproject.toml" ]; then
-    echo "Project: $(basename $(pwd)) (Python)"
+    echo "Project: $(basename "$(pwd)") (Python)"
 elif [ -f "go.mod" ]; then
     MODULE=$(head -1 go.mod | awk '{print $2}')
     echo "Project: $MODULE (Go)"
 else
-    echo "Project: $(basename $(pwd))"
+    echo "Project: $(basename "$(pwd)")"
 fi
 
 # Recent activity

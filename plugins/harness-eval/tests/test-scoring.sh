@@ -121,8 +121,8 @@ assert_score_range "production-project" 9.5 10.0 "production scores 9.5-10.0"
 echo ""
 echo "--- Exact FAIL-check sets (catches a check flipping status without moving the tier score) ---"
 assert_fail_ids "minimal-project" \
-  "basic-command-exists,basic-hook-registered,func-agent,func-hook-events,func-secret-scanning,func-skills,prod-ci-cd,prod-e2e-tests,prod-migration-guide,robust-agent-schema,robust-deny-list,robust-error-recovery,robust-module-claude-md,robust-tests" \
-  "minimal FAILs exactly its 14 basic/func/robust/prod checks"
+  "basic-command-exists,basic-hook-registered,basic-settings,func-agent,func-hook-events,func-secret-scanning,func-skills,prod-ci-cd,prod-e2e-tests,prod-migration-guide,robust-agent-schema,robust-deny-list,robust-error-recovery,robust-module-claude-md,robust-tests" \
+  "minimal FAILs exactly its 15 basic/func/robust/prod checks"
 assert_fail_ids "functional-project" \
   "prod-ci-cd,prod-e2e-tests,prod-migration-guide,robust-agent-schema,robust-deny-list,robust-error-recovery,robust-module-claude-md,robust-tests" \
   "functional FAILs exactly the 8 robust+prod checks"

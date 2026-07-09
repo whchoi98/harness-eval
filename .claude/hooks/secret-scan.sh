@@ -74,6 +74,8 @@ while IFS= read -r -d '' file; do
     skip=false
     base="${file##*/}"
     for pattern in "${SKIP_PATTERNS[@]}"; do
+        # SC2053: glob matching on $pattern is intentional (e.g. '*.md', 'yarn.lock').
+        # shellcheck disable=SC2053
         [[ "$file" == $pattern || "$base" == $pattern ]] && skip=true && break
     done
     $skip && continue

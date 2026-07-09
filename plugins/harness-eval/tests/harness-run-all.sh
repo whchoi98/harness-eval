@@ -109,6 +109,7 @@ for subdir in hooks structure; do
         fi
         echo -e "${CYAN}▸ $test_name${NC}"
         set +e
+        # shellcheck source=/dev/null
         source "$test_file"
         src_rc=$?
         set -e

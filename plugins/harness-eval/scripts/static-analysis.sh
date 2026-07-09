@@ -133,7 +133,6 @@ add_check() {
 check_bash_syntax() {
   log "Running bash-syntax checks..."
   local found_any=false
-  local all_pass=true
 
   local dirs=(".claude/hooks" "scripts")
   for dir in "${dirs[@]}"; do
@@ -149,7 +148,6 @@ check_bash_syntax() {
       if syntax_output="$(bash -n "$sh_file" 2>&1)"; then
         add_check "bash-syntax" "correctness" "PASS" "Syntax OK: $rel_path" "$rel_path"
       else
-        all_pass=false
         # Sanitize error output for JSON
         local err_msg
         err_msg="$(echo "$syntax_output" | head -5 | tr '\n' '; ')"
