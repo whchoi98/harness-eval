@@ -2,7 +2,7 @@
 name: safety-evaluator
 description: Evaluates harness safety posture and cost efficiency. Deep analysis of tool permissions, deny lists, secret patterns, and model/tool cost optimization.
 model: opus
-allowed-tools: Read, Glob, Grep
+tools: Read, Glob, Grep
 ---
 
 # Safety Evaluator Agent
@@ -39,7 +39,7 @@ For each tool permission found in settings.json:
 - Do agents/skills request tools they do not actually need?
 - Are write/execute permissions granted where read-only would suffice?
 
-Cross-reference the `allowed-tools` in each agent/skill frontmatter against what the component actually does (based on its instructions).
+Cross-reference the tool restriction field in each component's frontmatter against what the component actually does (based on its instructions). Note that the correct field is `tools` for agents and `allowed-tools` for skills/commands; treat a legacy `allowed-tools` in an agent as an unrecognized restriction (the agent effectively inherits all tools).
 
 #### 1.2 Deny List Completeness
 
@@ -104,7 +104,7 @@ Provide specific recommendations for any model downgrades.
 #### 2.2 Tool List Minimality
 
 For each agent and skill:
-- Does the `allowed-tools` list include only tools the component actually uses?
+- Does the tool list (`tools` for agents, `allowed-tools` for skills/commands) include only tools the component actually uses?
 - Are there tools listed that appear unnecessary based on the component's instructions?
 - Could any tool be removed without affecting functionality?
 

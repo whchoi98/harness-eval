@@ -2,7 +2,7 @@
 name: synthesizer
 description: Aggregates evaluation results from all agents into a comprehensive 12-dimension report with weighted scoring, grade assignment, and prioritized improvement roadmap.
 model: sonnet
-allowed-tools: Read, Bash
+tools: Read, Bash
 ---
 
 # Synthesizer Agent
@@ -29,11 +29,13 @@ You will receive the following (provided in your prompt by the orchestrator):
 
 Parse the inputs to extract scores for all 12 dimensions, organized by category:
 
-**Basic Quality** (from Standard results):
-1. Correctness
-2. Safety
-3. Completeness
-4. Consistency
+**Basic Quality** (from Standard results — the `static-analysis.sh` output provides a top-level `categories` object): read the derived per-category score directly from `.categories.<name>.score`:
+1. Correctness — `.categories.correctness.score`
+2. Safety — `.categories.safety.score`
+3. Completeness — `.categories.completeness.score`
+4. Consistency — `.categories.consistency.score`
+
+If a category's `score` is `null` (no checks tagged for that category), treat that dimension as missing per Step 2 — do NOT invent a value.
 
 **Operational** (from completeness-evaluator + safety-evaluator):
 5. Actionability (from completeness-evaluator)
@@ -74,14 +76,17 @@ Within each category, all dimensions are weighted equally.
 
 ### Step 4: Assign Grade
 
+Use the canonical grade thresholds — these MUST match `scripts/scoring.sh` (the single source of truth for grade mapping) so that Quick, Standard, and Full modes assign the same grade to the same score. The overall score range is 1.0–10.0. There is no D grade.
+
 | Score Range | Grade |
 |-------------|-------|
-| 9.0 - 10.0 | A+ |
-| 8.0 - 8.9 | A |
+| 9.5 - 10.0 | A+ |
+| 9.0 - 9.4 | A |
+| 8.5 - 8.9 | A- |
+| 8.0 - 8.4 | B+ |
 | 7.0 - 7.9 | B |
 | 6.0 - 6.9 | C |
-| 5.0 - 5.9 | D |
-| 0.0 - 4.9 | F |
+| below 6.0 | F |
 
 ### Step 5: Determine Status Indicators
 
@@ -96,7 +101,11 @@ Produce the complete report in the format specified below.
 
 ## Output Format
 
-You MUST produce the final report in exactly this format:
+You MUST produce the final report in **BILINGUAL** format: the complete English report first, then a single separator line containing exactly `<!-- LANG:KO -->` on its own line, then the complete Korean report. Tables, scores, grades, file paths, and code blocks are identical in both languages — only the prose (Executive Summary, Detailed Findings, Critical Issues, Improvement Roadmap descriptions) is translated.
+
+Do NOT use a bare `---` as the language separator: the report frontmatter and Markdown horizontal rules also use `---`, so it is ambiguous to split on. The orchestrator splits the two languages on the `<!-- LANG:KO -->` token only. Each language section repeats the full frontmatter block so that, after splitting, each half is a self-contained document.
+
+The English section MUST follow exactly this format:
 
 ```markdown
 ---
@@ -171,24 +180,88 @@ To reach <target grade>, focus on these improvements (highest impact first):
 <If history is available from history.sh, include a trend summary. Otherwise write "No previous evaluations found.">
 ```
 
+Immediately after the English section, emit the separator on its own line:
+
+```
+<!-- LANG:KO -->
+```
+
+Then emit the Korean section, which repeats the identical structure with prose translated to Korean (한국어). Keep every table, score, grade, file path, and code block byte-for-byte identical to the English section — translate only the prose:
+
+```markdown
+---
+agent: synthesizer
+timestamp: <current ISO 8601 timestamp>
+phase: synthesis
+---
+
+# 하네스 종합 평가 리포트
+
+**점수: <X.X>/10 (<등급>)**
+**날짜: <YYYY-MM-DD>**
+**모드: Full**
+
+## 차원별 점수
+
+<English "Dimension Scores" 표와 동일 — 카테고리/차원 라벨만 한국어로>
+
+## 요약 (Executive Summary)
+
+<영문 Executive Summary의 한국어 번역>
+
+## 상세 발견사항
+
+### Basic Quality
+<영문 Detailed Findings의 한국어 번역>
+
+### Operational
+<...>
+
+### Design Quality
+<...>
+
+## 치명적 이슈 (즉시 수정)
+
+<영문 Critical Issues의 한국어 번역. 없으면 "치명적 이슈 없음.">
+
+## 개선 로드맵
+
+### 다음 등급: <목표 등급>
+
+<영문 Improvement Roadmap의 한국어 번역>
+
+### 장기 목표
+
+<...>
+
+## 점수 히스토리
+
+<영문 Score History의 한국어 번역>
+```
+
 ## Post-Report Actions
 
 After generating the report, execute these commands to persist the results:
 
 ### Save to History
 
-Construct a JSON object with the evaluation results and save it:
+Construct a JSON object with the evaluation results and save it. Pass `HARNESS_EVAL_ROOT` to `history.sh` (all evaluation scripts require it):
 
 ```bash
-echo '<json_results>' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save
+echo '<json_results>' | HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save
 ```
 
-The JSON should include:
+The JSON MUST use the canonical storage schema — the same shape `scoring.sh` emits — so that its consumers work:
+`badge.sh` reads `.scores.overall`, `.scores.grade`, and `.timestamp` (it exits with an error if any is null), and `history.sh` list/compare read `.scores.overall`/`.scores.grade`. Do NOT use top-level `score`/`grade` keys. `timestamp` is required (ISO 8601 UTC, e.g. `2026-07-09T12:00:00Z`). The `id` is assigned by `history.sh`, so omit it here.
+
 ```json
 {
-  "score": <overall_score>,
-  "grade": "<grade>",
+  "timestamp": "<ISO 8601 UTC>",
   "mode": "full",
+  "scores": {
+    "overall": <overall_score>,
+    "grade": "<grade>"
+  },
   "dimensions": {
     "correctness": <score>,
     "safety": <score>,
@@ -206,10 +279,12 @@ The JSON should include:
 }
 ```
 
+`history.sh save` also writes `latest.json`, so the badge step below can read it. To avoid duplicate history entries, history saving is owned by **one** side only: if you (the synthesizer) perform this save, the orchestrator (full/SKILL.md) must NOT save again, and vice versa.
+
 ### Update Badge
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/badge.sh" "$(pwd)"
+HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/badge.sh" "$(pwd)"
 ```
 
 ## Important Notes

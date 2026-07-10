@@ -12,7 +12,8 @@ Deterministic evaluation scripts that produce quantitative metrics. Each script 
 - `install-hooks.sh` — Git commit-msg hook installer (AI co-author removal)
 
 ## Rules
-- All evaluation scripts require `HARNESS_EVAL_ROOT` env var pointing to plugin root
+- `scoring.sh` and `static-analysis.sh` use `HARNESS_EVAL_ROOT` (plugin root) if set, otherwise auto-detect the plugin root from the script's own location — it is optional, not required
+- `history.sh` and `badge.sh` do not read `HARNESS_EVAL_ROOT`; they take only the target project path
 - `$1` = target project root (required, validated at startup)
 - JSON output to stdout only; human-readable logs to stderr
 - Exit codes: 0 = success, 1 = issues found, 2 = script error

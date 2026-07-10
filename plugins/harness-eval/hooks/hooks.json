@@ -1,5 +1,5 @@
 {
-  "description": "harness-eval plugin hooks - post-evaluation badge generation",
+  "description": "harness-eval plugin hooks - post-evaluation badge generation (opt-in; README is modified only when HARNESS_EVAL_AUTO_BADGE=1 or .harness-eval/config.json autoBadge:true)",
   "hooks": {
     "Stop": [
       {

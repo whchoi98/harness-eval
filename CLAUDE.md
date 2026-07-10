@@ -8,6 +8,12 @@ Marketplace + plugin monorepo for harness-eval — a Claude Code plugin that eva
 .claude-plugin/           - Marketplace manifest (marketplace.json)
 plugins/harness-eval/     - Plugin root (see plugins/harness-eval/CLAUDE.md for details)
 .claude/                  - Development-time hooks, skills, commands, agents
+docs/                     - Monorepo-level documentation
+  architecture.md         - System overview and component diagram
+  decisions/              - Architecture Decision Records
+  runbooks/               - Operational runbooks
+  onboarding.md           - New developer setup guide
+scripts/                  - Monorepo-level scripts (setup, hook installation)
 ```
 
 ## Installation

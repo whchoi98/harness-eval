@@ -15,7 +15,8 @@ assert_json_valid "settings.json is valid JSON" ".claude/settings.json"
 
 SETTINGS=$(cat .claude/settings.json)
 assert_contains "SessionStart hook registered" "$SETTINGS" "session-context.sh"
-assert_contains "PreCommit hook registered" "$SETTINGS" "secret-scan.sh"
+# secret-scan.sh is a PreToolUse hook (there is no 'PreCommit' event in Claude Code).
+assert_contains "PreToolUse secret-scan hook registered" "$SETTINGS" "secret-scan.sh"
 assert_contains "PostToolUse hook registered" "$SETTINGS" "check-doc-sync.sh"
 assert_contains "PostToolUse matcher is Write|Edit" "$SETTINGS" "Write|Edit"
 assert_contains "Notification hook registered" "$SETTINGS" "notify.sh"

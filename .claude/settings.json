@@ -4,14 +4,14 @@
     "deny": [
       "Bash(rm -rf:*)",
       "Bash(rm -r:*)",
+      "Bash(rm -fr:*)",
       "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",
       "Bash(chmod 777:*)",
-      "Bash(curl:* | bash)",
-      "Bash(wget:* | bash)",
       "Bash(eval:*)",
-      "Bash(python3 -c:*import os*)"
+      "Bash(python3 -c:*)"
     ]
   },
   "hooks": {
@@ -26,13 +26,13 @@
         ]
       }
     ],
-    "PreCommit": [
+    "PreToolUse": [
       {
-        "matcher": "",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/secret-scan.sh 2>/dev/null || true"
+            "command": "bash .claude/hooks/secret-scan.sh"
           }
         ]
       }
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/check-doc-sync.sh \"$TOOL_INPUT_PATH\" 2>/dev/null || true"
+            "command": "bash .claude/hooks/check-doc-sync.sh || true"
           }
         ]
       }
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/notify.sh \"$EVENT\" \"$MESSAGE\" 2>/dev/null || true"
+            "command": "bash .claude/hooks/notify.sh 2>/dev/null || true"
           }
         ]
       }

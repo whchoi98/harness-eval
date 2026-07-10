@@ -2,7 +2,7 @@
 name: design-evaluator
 description: Evaluates harness architecture quality based on Anthropic's harness design patterns. Analyzes agent communication, context management, feedback loops, and evolvability.
 model: opus
-allowed-tools: Read, Glob, Grep
+tools: Read, Glob, Grep
 ---
 
 # Design Evaluator Agent

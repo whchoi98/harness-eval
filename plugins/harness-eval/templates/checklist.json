@@ -40,7 +40,7 @@
       "items": [
         {
           "id": "func-hook-events",
-          "description": "All 4 hook events registered (PreToolUse, PostToolUse, PreCommit, Notification or Stop)",
+          "description": "Core hook events registered (PreToolUse, PostToolUse)",
           "type": "json_keys_present",
           "target": ".claude/settings.json",
           "path": ".hooks",
@@ -48,16 +48,16 @@
         },
         {
           "id": "func-secret-scanning",
-          "description": "Secret scanning hook exists",
+          "description": "Secret scanning hook exists (settings.json or settings.local.json)",
           "type": "grep_match",
-          "target": ".claude/settings.json",
+          "target": ".claude/settings*.json",
           "pattern": "secret|AKIA|password|token"
         },
         {
           "id": "func-skills",
-          "description": "At least 2 skill files exist",
+          "description": "At least 2 skill files exist (flat *.md or <name>/SKILL.md convention)",
           "type": "glob_min",
-          "target": ".claude/skills/*.md",
+          "target": ".claude/skills/**/*.md",
           "min": 2
         },
         {

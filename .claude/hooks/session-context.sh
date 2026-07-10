@@ -1,6 +1,12 @@
 #!/bin/bash
 # Load project context at Claude Code session start.
+# Wired as a Claude Code SessionStart hook in .claude/settings.json.
 # Outputs key project information for immediate context.
+
+# Operate from the project root regardless of the invoking cwd. Claude Code
+# exposes CLAUDE_PROJECT_DIR for hooks; fall back to the current directory
+# (SessionStart delivers no meaningful stdin payload for this hook).
+cd "${CLAUDE_PROJECT_DIR:-$(pwd)}" 2>/dev/null || true
 
 echo "=== Project Context ==="
 
@@ -13,12 +19,12 @@ elif [ -f "package.json" ]; then
     NAME=$(python3 -c "import json; print(json.load(open('package.json')).get('name',''))" 2>/dev/null)
     echo "Project: $NAME (Node.js)"
 elif [ -f "pyproject.toml" ]; then
-    echo "Project: $(basename $(pwd)) (Python)"
+    echo "Project: $(basename "$(pwd)") (Python)"
 elif [ -f "go.mod" ]; then
     MODULE=$(head -1 go.mod | awk '{print $2}')
     echo "Project: $MODULE (Go)"
 else
-    echo "Project: $(basename $(pwd))"
+    echo "Project: $(basename "$(pwd)")"
 fi
 
 # Recent activity

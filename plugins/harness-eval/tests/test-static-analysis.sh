@@ -230,6 +230,37 @@ broken_file_mentioned=$(echo "$tmp_output" | jq '
 assert_true "$broken_file_mentioned" "bash-syntax FAIL check references broken hook file"
 
 ###############################################################################
+# Test 9: hook-file-mapping supports the nested (real Claude Code) hook schema
+#          — regression guard for the flat-only command-extraction bug (decision #4).
+###############################################################################
+echo ""
+echo "--- Nested hook schema (hook-file-mapping regression) ---"
+
+nested_output=$("$ANALYSIS" "$FIXTURES/nested-hooks-project" 2>/dev/null) || true
+
+# The nested fixture references present-hook.sh (exists) and missing-hook.sh (absent),
+# both under the real Claude Code nested schema (.hooks.<Event>[].hooks[].command).
+# Extraction must read the nested command and never yield the pre-fix "null" path.
+nested_present=$(echo "$nested_output" | jq '
+  [.checks[]
+   | select(.id == "hook-file-mapping" and .status == "PASS"
+            and (.details | test("present-hook\\.sh")))] | length' 2>/dev/null || echo "0")
+assert_ge "$nested_present" 1 "nested schema: present-hook.sh mapped to PASS"
+
+nested_missing=$(echo "$nested_output" | jq '
+  [.checks[]
+   | select(.id == "hook-file-mapping" and .status == "FAIL"
+            and (.details | test("missing-hook\\.sh")))] | length' 2>/dev/null || echo "0")
+assert_ge "$nested_missing" 1 "nested schema: missing-hook.sh mapped to FAIL"
+
+# Regression: the flat-only extraction produced "Hook file missing: null" for nested hooks.
+nested_null=$(echo "$nested_output" | jq '
+  [.checks[]
+   | select(.id == "hook-file-mapping")
+   | .details | select(test("null"))] | length' 2>/dev/null || echo "0")
+assert_eq "$nested_null" "0" "nested schema: no 'null' hook path leaked (decision #4 regression)"
+
+###############################################################################
 # Summary
 ###############################################################################
 echo ""

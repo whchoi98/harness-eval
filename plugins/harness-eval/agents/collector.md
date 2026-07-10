@@ -2,7 +2,7 @@
 name: collector
 description: Scans project structure and collects harness artifacts for evaluation. Produces a structured project overview consumed by evaluator agents.
 model: sonnet
-allowed-tools: Read, Glob, Grep, Bash, LS
+tools: Read, Glob, Grep, Bash
 ---
 
 # Collector Agent
@@ -73,7 +73,7 @@ For each agent file, record:
 - **Name**: the `name` field from YAML frontmatter
 - **Description**: the `description` field from YAML frontmatter
 - **Model**: the `model` field from YAML frontmatter
-- **Allowed tools**: the `allowed-tools` field from YAML frontmatter
+- **Tools**: the `tools` field from YAML frontmatter (also check the legacy `allowed-tools` field for older projects)
 - **Has frontmatter**: yes/no
 - **Line count**: number of lines
 

@@ -29,7 +29,9 @@ TARGET=""
 # Logging helpers (all go to stderr)
 ###############################################################################
 log() { echo "[badge] $*" >&2; }
-emit_error() { echo "{\"error\":\"$*\"}" >&2; }
+# Build the error JSON with jq so messages containing quotes/backslashes
+# (e.g. target paths) stay valid JSON for machine consumers on stderr.
+emit_error() { jq -n --arg msg "$*" '{error:$msg}' >&2; }
 
 ###############################################################################
 # Argument parsing
@@ -57,14 +59,15 @@ parse_args() {
 ###############################################################################
 score_to_color() {
   local score="$1"
-  awk "BEGIN {
-    s = $score
-    if (s >= 9.0) print \"brightgreen\"
-    else if (s >= 8.0) print \"green\"
-    else if (s >= 7.0) print \"yellow\"
-    else if (s >= 6.0) print \"orange\"
-    else print \"red\"
-  }"
+  # Pass score as a data variable (awk -v) rather than interpolating it into
+  # the program text, so a crafted latest.json cannot inject awk/shell code.
+  awk -v s="$score" 'BEGIN {
+    if (s >= 9.0) print "brightgreen"
+    else if (s >= 8.0) print "green"
+    else if (s >= 7.0) print "yellow"
+    else if (s >= 6.0) print "orange"
+    else print "red"
+  }'
 }
 
 ###############################################################################
@@ -136,20 +139,35 @@ update_readme() {
     return
   fi
 
-  local content
-  content="$(cat "$readme")"
-
   local start_marker="<!-- harness-eval-badge:start -->"
   local end_marker="<!-- harness-eval-badge:end -->"
 
-  if echo "$content" | grep -qF "$start_marker"; then
+  local has_start=false has_end=false
+  grep -qF "$start_marker" "$readme" && has_start=true
+  grep -qF "$end_marker" "$readme" && has_end=true
+
+  if [[ "$has_start" == true && "$has_end" == true ]]; then
     log "Markers found, replacing badge block"
-    # Use awk to replace content between markers (inclusive)
-    awk -v new_block="$badge_block" '
+    # Replace content between markers (inclusive). The END guard fails the
+    # rewrite if the block never closed (start seen but end never reached),
+    # so a malformed README is preserved rather than truncated.
+    if awk -v new_block="$badge_block" '
       /<!-- harness-eval-badge:start -->/ { in_block=1; print new_block; next }
-      /<!-- harness-eval-badge:end -->/ { in_block=0; next }
+      /<!-- harness-eval-badge:end -->/   { in_block=0; next }
       !in_block { print }
-    ' "$readme" > "$readme.tmp" && mv "$readme.tmp" "$readme"
+      END { if (in_block == 1) exit 3 }
+    ' "$readme" > "$readme.tmp"; then
+      mv "$readme.tmp" "$readme"
+    else
+      rm -f "$readme.tmp"
+      emit_error "README badge block is malformed (start marker without matching end); leaving README.md unchanged"
+      exit 2
+    fi
+  elif [[ "$has_start" == true ]]; then
+    # Start marker present but end marker missing: a destructive rewrite would
+    # delete everything after the start marker. Preserve the file instead.
+    emit_error "README badge block is malformed (start marker without matching end); leaving README.md unchanged"
+    exit 2
   else
     log "No markers found, appending badges to README.md"
     printf '\n%s\n' "$badge_block" >> "$readme"
@@ -190,8 +208,27 @@ main() {
     exit 2
   fi
 
+  # SECURITY: latest.json may originate from an untrusted target project.
+  # Validate every field before it is fed to awk / jq / markdown / URLs so a
+  # crafted file cannot inject code or corrupt the badge output.
+  # score flows into an awk program and jq --argjson: it MUST be numeric.
+  if [[ ! "$score" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    emit_error "Invalid non-numeric score in latest.json: $score"
+    exit 2
+  fi
+  # grade is embedded in badge markdown/URLs: restrict to a safe charset.
+  if [[ ! "$grade" =~ ^[A-Za-z][+-]?$ ]]; then
+    emit_error "Invalid grade in latest.json: $grade"
+    exit 2
+  fi
+
   # Extract date portion from ISO timestamp (e.g. "2026-04-06T00:00:00Z" -> "2026-04-06")
   local date="${timestamp%%T*}"
+  # date is embedded in a badge URL: require a plain ISO date (digits/dashes).
+  if [[ ! "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    emit_error "Invalid timestamp in latest.json (expected ISO date): $timestamp"
+    exit 2
+  fi
 
   local color
   color="$(score_to_color "$score")"

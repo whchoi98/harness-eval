@@ -95,7 +95,11 @@ cd "$REPO_ROOT"
 echo -e "${CYAN}=== Harness Validation Test Suite ===${NC}"
 echo ""
 
-# Run tests from hooks/ and structure/ subdirectories
+# Run harness tests from hooks/ and structure/ subdirectories.
+# Each file is sourced so it can call the exported pass/fail helpers that mutate the
+# shared counters. errexit is disabled around the source so that a hook-behaviour
+# regression (e.g. `OUTPUT=$(bash hook.sh)` returning non-zero) records a FAIL and the
+# suite still prints its full summary instead of aborting mid-run without one.
 for subdir in hooks structure; do
     TEST_FILES=$(find "$SCRIPT_DIR/$subdir" -name "test-*.sh" 2>/dev/null | sort)
     for test_file in $TEST_FILES; do
@@ -104,10 +108,84 @@ for subdir in hooks structure; do
             continue
         fi
         echo -e "${CYAN}▸ $test_name${NC}"
+        set +e
+        # shellcheck source=/dev/null
         source "$test_file"
+        src_rc=$?
+        set -e
+        if [ "$src_rc" -ne 0 ]; then
+            fail "$test_name (aborted)" "test file returned exit code $src_rc before completing"
+        fi
         echo ""
     done
 done
+
+# Run the three evaluation-script suites (scoring / static-analysis / history) so a
+# single `harness-run-all.sh` invocation truly covers all suites. They are standalone
+# scripts with their own PASS/FAIL accounting and their own `set -euo pipefail`, so run
+# each as a subprocess (never source — they call `exit`) and fold their totals in.
+EVAL_SUITES=(test-scoring test-static-analysis test-history)
+for suite in "${EVAL_SUITES[@]}"; do
+    if [ -n "$FILTER" ] && ! echo "$suite" | grep -q "$FILTER"; then
+        continue
+    fi
+    suite_file="$SCRIPT_DIR/$suite.sh"
+    echo -e "${CYAN}▸ $suite${NC}"
+    if [ ! -f "$suite_file" ]; then
+        skip "$suite" "file not found: $suite_file"
+        echo ""
+        continue
+    fi
+    suite_out="$(HARNESS_EVAL_ROOT="$PLUGIN_ROOT" bash "$suite_file" 2>&1)" || true
+    summary_line="$(printf '%s\n' "$suite_out" | grep -E '^Results: [0-9]+ passed, [0-9]+ failed' | tail -1)"
+    if [ -z "$summary_line" ]; then
+        fail "$suite" "no results summary produced (suite crashed?)"
+        printf '%s\n' "$suite_out" | tail -15
+        echo ""
+        continue
+    fi
+    s_pass="$(printf '%s' "$summary_line" | awk '{print $2}')"
+    s_fail="$(printf '%s' "$summary_line" | awk '{print $4}')"
+    TOTAL=$((TOTAL + s_pass + s_fail))
+    PASSED=$((PASSED + s_pass))
+    FAILED=$((FAILED + s_fail))
+    if [ "$s_fail" -gt 0 ]; then
+        FAILURES+=("$suite: $s_fail failing assertion(s)")
+        echo -e "  ${RED}✗${NC} $suite: $s_pass passed, $s_fail failed"
+        printf '%s\n' "$suite_out" | grep -E 'FAIL:' | head -20 || true
+    else
+        echo -e "  ${GREEN}✓${NC} $suite: $s_pass passed"
+    fi
+    echo ""
+done
+
+# Shellcheck stage: static-lint every tracked shell script. SKIP when shellcheck is
+# not installed. Gated at error severity so genuine defects fail the suite while the
+# existing warning/info backlog (tracked separately) does not block it; CI runs the
+# stricter warning-level lint as an advisory job.
+if [ -z "$FILTER" ] || echo "shellcheck" | grep -q "$FILTER"; then
+    echo -e "${CYAN}▸ shellcheck${NC}"
+    if command -v shellcheck >/dev/null 2>&1; then
+        SC_FILES=()
+        while IFS= read -r -d '' f; do
+            SC_FILES+=("$f")
+        done < <(find "$REPO_ROOT" -name '*.sh' -not -path '*/.git/*' -print0 | sort -z)
+        if [ "${#SC_FILES[@]}" -eq 0 ]; then
+            skip "shellcheck lint" "no .sh files found"
+        else
+            SC_LOG="$(mktemp)"
+            if shellcheck -S error "${SC_FILES[@]}" >"$SC_LOG" 2>&1; then
+                pass "shellcheck: ${#SC_FILES[@]} scripts clean (error severity)"
+            else
+                fail "shellcheck: error-severity findings" "$(head -20 "$SC_LOG")"
+            fi
+            rm -f "$SC_LOG"
+        fi
+    else
+        skip "shellcheck lint" "shellcheck not installed"
+    fi
+    echo ""
+fi
 
 echo -e "${CYAN}=== Results ===${NC}"
 echo -e "  Total:   $TOTAL"

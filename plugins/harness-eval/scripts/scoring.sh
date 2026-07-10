@@ -90,7 +90,9 @@ parse_args() {
 # Logging helpers (all go to stderr)
 ###############################################################################
 log() { echo "[scoring] $*" >&2; }
-emit_error() { echo "{\"error\":\"$*\"}" >&2; }
+# Build the error JSON with jq so messages containing quotes/backslashes
+# (e.g. target paths) stay valid JSON for machine consumers on stderr.
+emit_error() { jq -n --arg msg "$*" '{error:$msg}' >&2; }
 
 ###############################################################################
 # Check function: file_exists
@@ -135,6 +137,22 @@ check_file_exists_any() {
 }
 
 ###############################################################################
+# Helper: _find_files_pruned — recursive find that skips noise directories
+#   (.git, node_modules, .venv, vendor, .harness-eval). Without pruning, a
+#   pattern like **/CLAUDE.md would count third-party/vendored files toward the
+#   score and could take many seconds on large real projects, breaking the
+#   Quick mode "~30s" promise. The name pattern is passed as a find argument
+#   (never eval'd), so it is injection-safe.
+###############################################################################
+_find_files_pruned() {
+  local search_dir="$1"
+  local name_pattern="$2"
+  find "$search_dir" \
+    -type d \( -name .git -o -name node_modules -o -name .venv -o -name vendor -o -name .harness-eval \) -prune \
+    -o -type f -name "$name_pattern" -print 2>/dev/null || true
+}
+
+###############################################################################
 # Helper: expand_glob — expand a glob pattern relative to TARGET
 #   For patterns with **, uses find recursively
 #   For simple patterns, uses find in the specific directory
@@ -166,8 +184,8 @@ expand_glob() {
       return
     fi
 
-    # suffix may contain wildcards — use -name
-    find "$search_dir" -type f -name "$suffix" 2>/dev/null || true
+    # suffix may contain wildcards — use -name (noise dirs pruned)
+    _find_files_pruned "$search_dir" "$suffix"
   else
     # Non-recursive: find in the specific directory
     local dir_part file_part
@@ -217,7 +235,7 @@ _expand_glob_with_braces() {
 
     for alt in "${alternatives[@]}"; do
       local name_pattern="${name_prefix}${alt}${after_brace}"
-      find "$search_dir" -type f -name "$name_pattern" 2>/dev/null || true
+      _find_files_pruned "$search_dir" "$name_pattern"
     done
   else
     local dir_part
@@ -526,8 +544,13 @@ evaluate() {
     weight="$(echo "$tier_data" | jq -r '.weight')"
     tier_weight[$tier]="$weight"
 
+    # Guard against a tier object missing/`null` .items: `.items[]` would make
+    # jq exit non-zero ("Cannot iterate over null") and, under set -euo
+    # pipefail, kill the script with a raw error and no JSON output — breaking
+    # the documented 0/1/2 exit contract. `.items // [] | .[]` yields no items
+    # instead, so such a tier simply scores 0 and the script still emits JSON.
     local items
-    items="$(echo "$tier_data" | jq -c '.items[]')"
+    items="$(echo "$tier_data" | jq -c '.items // [] | .[]')"
 
     local passed=0
     local total=0

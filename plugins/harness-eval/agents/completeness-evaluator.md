@@ -2,7 +2,7 @@
 name: completeness-evaluator
 description: Evaluates harness actionability, testability, and contract-based testing. Assesses whether components are usable, tested, and have clear interfaces.
 model: sonnet
-allowed-tools: Read, Glob, Grep
+tools: Read, Glob, Grep
 ---
 
 # Completeness Evaluator Agent

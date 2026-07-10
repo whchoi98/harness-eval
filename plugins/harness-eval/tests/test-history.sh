@@ -106,6 +106,7 @@ echo "--- 1. Save roundtrip ---"
 T="$(new_tmpdir)"
 mkdir -p "$T/proj"
 
+# shellcheck disable=SC2034  # save is run for its side effect; stdout is intentionally discarded
 output="$(echo "$SCORE_A" | "$HISTORY" "$T/proj" save 2>/dev/null)"
 list_out="$(           "$HISTORY" "$T/proj" list 2>/dev/null)"
 count="$(echo "$list_out" | jq 'length')"
