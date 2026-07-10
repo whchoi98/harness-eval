@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-07-09
+## [0.2.0] - 2026-07-10
 
 Remediation release: a multi-dimension review with adversarial verification found
 61 confirmed defects + 5 design gaps; this release addresses all of them. The test
@@ -92,7 +92,7 @@ suite runs 190 checks via `harness-run-all.sh` and `claude plugin validate` exit
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-07-09
+## [0.2.0] - 2026-07-10
 
 보강 릴리스: 적대적 검증을 곁들인 다차원 리뷰에서 확정 결함 61건 + 설계 갭 5건을 발견했고, 이 릴리스에서 전부 해소했다. `harness-run-all.sh` 기준 190개 체크를 실행하며 `claude plugin validate`는 exit 0이다.
 
