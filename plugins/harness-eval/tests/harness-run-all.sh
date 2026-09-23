@@ -46,9 +46,11 @@ assert_eq() {
     [ "$expected" = "$actual" ] && pass "$desc" || fail "$desc" "expected '$expected', got '$actual'"
 }
 
+# Helpers feed grep with here-strings, not `echo | grep -q`: under pipefail, grep -q
+# exiting on the first match can SIGPIPE the writer and fail a check that matched.
 assert_contains() {
     local desc="$1" haystack="$2" needle="$3"
-    echo "$haystack" | grep -q "$needle" && pass "$desc" || fail "$desc" "output does not contain '$needle'"
+    grep -q -- "$needle" <<< "$haystack" && pass "$desc" || fail "$desc" "output does not contain '$needle'"
 }
 
 assert_file_exists() {
@@ -73,12 +75,12 @@ assert_bash_syntax() {
 
 assert_grep_match() {
     local desc="$1" pattern="$2" input="$3"
-    echo "$input" | grep -qP "$pattern" 2>/dev/null && pass "$desc" || fail "$desc" "pattern '$pattern' did not match"
+    grep -qP -- "$pattern" <<< "$input" 2>/dev/null && pass "$desc" || fail "$desc" "pattern '$pattern' did not match"
 }
 
 assert_grep_no_match() {
     local desc="$1" pattern="$2" input="$3"
-    echo "$input" | grep -qP "$pattern" 2>/dev/null && fail "$desc" "pattern '$pattern' matched (expected no match)" || pass "$desc"
+    grep -qP -- "$pattern" <<< "$input" 2>/dev/null && fail "$desc" "pattern '$pattern' matched (expected no match)" || pass "$desc"
 }
 
 export -f pass fail skip assert_eq assert_contains assert_file_exists
@@ -100,11 +102,20 @@ echo ""
 # shared counters. errexit is disabled around the source so that a hook-behaviour
 # regression (e.g. `OUTPUT=$(bash hook.sh)` returning non-zero) records a FAIL and the
 # suite still prints its full summary instead of aborting mid-run without one.
+# This script runs under `set -euo pipefail`, so a pipeline or command substitution
+# whose first command fails (find on a missing directory, grep with no match) would
+# end the whole run before the summary. Such commands carry `|| true` or a check.
 for subdir in hooks structure; do
-    TEST_FILES=$(find "$SCRIPT_DIR/$subdir" -name "test-*.sh" 2>/dev/null | sort)
+    if [ ! -d "$SCRIPT_DIR/$subdir" ]; then
+        echo -e "${CYAN}▸ $subdir/${NC}"
+        fail "$subdir/ tests" "directory not found: $SCRIPT_DIR/$subdir"
+        echo ""
+        continue
+    fi
+    TEST_FILES=$(find "$SCRIPT_DIR/$subdir" -name "test-*.sh" 2>/dev/null | sort) || true
     for test_file in $TEST_FILES; do
         test_name=$(basename "$test_file" .sh)
-        if [ -n "$FILTER" ] && ! echo "$test_name" | grep -q "$FILTER"; then
+        if [ -n "$FILTER" ] && ! grep -q -- "$FILTER" <<< "$test_name"; then
             continue
         fi
         echo -e "${CYAN}▸ $test_name${NC}"
@@ -120,13 +131,13 @@ for subdir in hooks structure; do
     done
 done
 
-# Run the three evaluation-script suites (scoring / static-analysis / history) so a
-# single `harness-run-all.sh` invocation truly covers all suites. They are standalone
+# Run the four evaluation-script suites (scoring / static-analysis / history / aggregate)
+# so a single `harness-run-all.sh` invocation truly covers all suites. They are standalone
 # scripts with their own PASS/FAIL accounting and their own `set -euo pipefail`, so run
 # each as a subprocess (never source — they call `exit`) and fold their totals in.
-EVAL_SUITES=(test-scoring test-static-analysis test-history)
+EVAL_SUITES=(test-scoring test-static-analysis test-history test-aggregate)
 for suite in "${EVAL_SUITES[@]}"; do
-    if [ -n "$FILTER" ] && ! echo "$suite" | grep -q "$FILTER"; then
+    if [ -n "$FILTER" ] && ! grep -q -- "$FILTER" <<< "$suite"; then
         continue
     fi
     suite_file="$SCRIPT_DIR/$suite.sh"
@@ -136,10 +147,13 @@ for suite in "${EVAL_SUITES[@]}"; do
         echo ""
         continue
     fi
-    suite_out="$(HARNESS_EVAL_ROOT="$PLUGIN_ROOT" bash "$suite_file" 2>&1)" || true
-    summary_line="$(printf '%s\n' "$suite_out" | grep -E '^Results: [0-9]+ passed, [0-9]+ failed' | tail -1)"
+    suite_rc=0
+    suite_out="$(HARNESS_EVAL_ROOT="$PLUGIN_ROOT" bash "$suite_file" 2>&1)" || suite_rc=$?
+    # A crashed suite prints no Results line, so grep finds nothing and exits 1;
+    # `|| true` keeps that from ending the run, so the FAIL below is recorded.
+    summary_line="$(printf '%s\n' "$suite_out" | grep -E '^Results: [0-9]+ passed, [0-9]+ failed' | tail -1)" || true
     if [ -z "$summary_line" ]; then
-        fail "$suite" "no results summary produced (suite crashed?)"
+        fail "$suite" "no results summary produced (suite crashed? exit code $suite_rc); last lines of its output follow"
         printf '%s\n' "$suite_out" | tail -15
         echo ""
         continue
@@ -163,7 +177,7 @@ done
 # not installed. Gated at error severity so genuine defects fail the suite while the
 # existing warning/info backlog (tracked separately) does not block it; CI runs the
 # stricter warning-level lint as an advisory job.
-if [ -z "$FILTER" ] || echo "shellcheck" | grep -q "$FILTER"; then
+if [ -z "$FILTER" ] || grep -q -- "$FILTER" <<< "shellcheck"; then
     echo -e "${CYAN}▸ shellcheck${NC}"
     if command -v shellcheck >/dev/null 2>&1; then
         SC_FILES=()

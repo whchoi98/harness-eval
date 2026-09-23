@@ -25,7 +25,7 @@ fi
 
 # The hook's patterns rely on PCRE (grep -P); when unavailable it falls back to -E
 # and relaxes patterns, so the exact TP/FP expectations below only hold under PCRE.
-if ! printf 'AKIA0000000000000000\n' | grep -qP 'AKIA[0-9A-Z]{16}' 2>/dev/null; then
+if ! grep -qP 'AKIA[0-9A-Z]{16}' <<< 'AKIA0000000000000000' 2>/dev/null; then
     skip "secret-scan.sh end-to-end tests" "grep -P (PCRE) not supported on this platform"
     return 0 2>/dev/null || exit 0
 fi
@@ -67,7 +67,7 @@ TP_REPO="$(_new_repo tp)"
 tp() {
     local label="$1" sample="$2"
     _scan "$TP_REPO" "candidate.txt" "$sample"
-    if [ "$SCAN_RC" -ne 0 ] && printf '%s' "$SCAN_OUT" | grep -q "candidate.txt"; then
+    if [ "$SCAN_RC" -ne 0 ] && grep -q "candidate.txt" <<< "$SCAN_OUT"; then
         pass "TP: $label blocked (rc=$SCAN_RC)"
     else
         fail "TP: $label" "expected block+filename, rc=$SCAN_RC out=[$SCAN_OUT]"
