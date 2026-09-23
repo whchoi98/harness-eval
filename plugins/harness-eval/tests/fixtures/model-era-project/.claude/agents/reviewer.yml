@@ -1,0 +1,7 @@
+# Legacy YAML agent definition. Claude Code loads only .md agents, so this file is inert.
+# model-config does not read it; agent-format flags it.
+name: reviewer
+description: Legacy YAML reviewer agent
+model: claude-3-opus-20240229
+prompt: |
+  Review the diff and report problems.

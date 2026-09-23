@@ -1,0 +1,5 @@
+{
+  "name": "triage",
+  "description": "Legacy JSON agent definition (inert: Claude Code loads only .md agents)",
+  "prompt": "Triage incoming issues."
+}

@@ -1,0 +1,13 @@
+{
+  "model": "opus[1m]",
+  "effortLevel": "medium",
+  "alwaysThinkingEnabled": false,
+  "env": {
+    "MAX_THINKING_TOKENS": "16000",
+    "CLAUDE_CODE_DISABLE_THINKING": "1",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "0",
+    "CLAUDE_CODE_EFFORT_LEVEL": "maximum",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-20250514"
+  }
+}
