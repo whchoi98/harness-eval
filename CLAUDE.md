@@ -10,8 +10,8 @@ plugins/harness-eval/     - Plugin root (see plugins/harness-eval/CLAUDE.md for 
 .claude/                  - Development-time hooks, skills, commands, agents
 docs/                     - Monorepo-level documentation
   architecture.md         - System overview and component diagram
-  decisions/              - Architecture Decision Records
-  runbooks/               - Operational runbooks
+  decisions/              - Template for monorepo-level ADRs (plugin ADRs live in plugins/harness-eval/docs/decisions/)
+  runbooks/               - Template for monorepo-level runbooks (plugin runbooks, release.md and model-change.md, live in plugins/harness-eval/docs/runbooks/)
   onboarding.md           - New developer setup guide
 scripts/                  - Monorepo-level scripts (setup, hook installation)
 ```
@@ -26,7 +26,7 @@ claude plugin install harness-eval@harness-eval
 ```bash
 cd plugins/harness-eval
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
-bash tests/harness-run-all.sh
+bash tests/harness-run-all.sh   # all suites, including the four evaluation-script suites
 ```
 
 For full plugin context, conventions, and commands, see [plugins/harness-eval/CLAUDE.md](plugins/harness-eval/CLAUDE.md).
