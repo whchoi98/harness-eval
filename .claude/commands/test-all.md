@@ -1,47 +1,39 @@
 ---
-description: Execute the full test suite and report results
-allowed-tools: Read, Bash(cd plugins/harness-eval:*), Bash(bash tests/harness-run-all.sh:*), Bash(bash tests/test-scoring.sh:*), Bash(bash tests/test-static-analysis.sh:*), Bash(bash tests/test-history.sh:*), Bash(bash -n:*), Bash(chmod +x:*), Bash(ls:*), Glob
+description: Run the harness-eval plugin's full test runner and report results
+allowed-tools: Read, Bash(cd plugins/harness-eval:*), Bash(bash tests/harness-run-all.sh:*), Bash(bash tests/test-scoring.sh:*), Bash(bash tests/test-static-analysis.sh:*), Bash(bash tests/test-history.sh:*), Bash(bash tests/test-aggregate.sh:*), Bash(bash -n:*), Bash(chmod +x:*), Bash(ls:*), Glob
+effort: low
 ---
 
 # Test All
 
-Execute the full test suite for the harness-eval plugin (161 tests total).
+Execute the full test suite for the harness-eval plugin.
 
 The runners live under `plugins/harness-eval/tests/`. There is no
-`tests/run-all.sh` at the repo root — the harness runner is
-`plugins/harness-eval/tests/harness-run-all.sh`, and the three evaluation-script
-suites are run separately with `HARNESS_EVAL_ROOT` set.
+`tests/run-all.sh` at the repo root — the runner is
+`plugins/harness-eval/tests/harness-run-all.sh`; it also runs the
+evaluation-script suites (`tests/test-*.sh`, listed in its `EVAL_SUITES`).
 
 ## Step 1: Verify Test Runners
 
 ```bash
-ls -la plugins/harness-eval/tests/harness-run-all.sh
-ls -la plugins/harness-eval/tests/test-scoring.sh
-ls -la plugins/harness-eval/tests/test-static-analysis.sh
-ls -la plugins/harness-eval/tests/test-history.sh
+ls -la plugins/harness-eval/tests/*.sh
 ```
 
 ## Step 2: Run Tests
 
-Run all four suites from the plugin directory:
-
-```bash
-cd plugins/harness-eval
-HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh          # 15 tests
-HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh  # 23 tests
-HARNESS_EVAL_ROOT=$(pwd) bash tests/test-history.sh          # 19 tests
-bash tests/harness-run-all.sh                                # 104 tests
-```
-
-If `$ARGUMENTS` specifies a filter, pass it to the harness runner:
 ```bash
 cd plugins/harness-eval && bash tests/harness-run-all.sh $ARGUMENTS
 ```
 
+`harness-run-all.sh` runs the hook and structure checks, re-runs the evaluation-script
+suites, and runs shellcheck (skipped if not installed). An argument filters by suite name
+(e.g. `hooks`, `structure`, `test-scoring`). Run a single evaluation suite directly
+(`HARNESS_EVAL_ROOT=$(pwd) bash tests/<suite>.sh`) only when isolating a failure.
+
 ## Step 3: Report
 
 Present:
-- Total tests run, passed, failed, skipped (expected total: 161)
+- Total tests run, passed, failed, skipped - as printed in the runner's Results block
 - Failed test details with file paths and error messages
 - Suggest fixes for failing tests if the cause is apparent
 

@@ -1,32 +1,12 @@
+---
+name: refactor
+description: Behavior-preserving refactors of harness-eval scripts, hooks, and prompts, verified by the repo's test runner. Use when the user asks to restructure or clean up code without changing behavior.
+---
+
 # Refactor Skill
 
-Refactor existing code to improve quality without changing behavior.
+Refactor without changing behavior.
 
-## Principles
-- Improve structure without changing behavior
-- Single Responsibility Principle (SRP)
-- Remove duplicate code (DRY)
-- Small, incremental steps with verification
-
-## Process
-
-### 1. Analysis
-- Identify the target code and its tests
-- Map all callers and dependencies
-- Confirm test coverage exists (suggest adding tests first if not)
-
-### 2. Plan
-Present the refactoring plan to the user:
-- What will change
-- What will NOT change (behavior preservation)
-- Risk assessment (low/medium/high)
-
-### 3. Execute
-- Make changes in small, verifiable steps
-- Run tests after each step if possible
-- Keep commits atomic
-
-### 4. Verify
-- Confirm all existing tests pass
-- Verify no behavior changes
-- Check that the refactoring achieved its goal
+- Before editing, show the user what will change, what will not, and the risk; wait for their go-ahead.
+- Behavior is defined by the tests and by the scripts' JSON output contracts that skills and agents consume (field names, exit codes). A refactor is done when `cd plugins/harness-eval && bash tests/harness-run-all.sh` passes with no edits to tests or fixtures; run it after each meaningful step.
+- If a needed test is missing, propose adding it first.
