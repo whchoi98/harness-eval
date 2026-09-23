@@ -1,18 +1,18 @@
 ---
 name: standard
-description: Standard harness evaluation — static analysis, dynamic testing, and checklist scoring in 2-3 minutes. Produces a detailed report with findings and improvement roadmap.
+description: Standard harness evaluation — static analysis, dynamic testing, and checklist scoring in 2-3 minutes. Produces a detailed report with findings and improvement roadmap. Dynamic testing runs the target's hooks and tests after the user confirms. Pass --static-only for repositories you do not trust.
 ---
 
 You are performing a Standard harness evaluation. This combines static analysis, dynamic testing, and checklist scoring for a comprehensive assessment.
 
 ## Trust boundary and mode selection
 
-**Read this before running anything.** Standard mode's dynamic analysis (Phase 2) *executes code from the target project* — its hook scripts and its test suite — on the evaluator's machine. A core use case for this tool is evaluating a repository you did NOT write (a teammate's project, a freshly cloned open-source repo). Running its hooks and tests can have side effects (network calls / webhooks, file writes, environment changes) even on repositories you trust, and running them against crafted input is itself risky. Static analysis (Phases 1 and 3) only reads files and is always safe.
+**Read this before running anything.** Standard mode's dynamic analysis (Phase 2) *executes code from the target project* — its hook scripts and its test suite — on the evaluator's machine. A core use case for this tool is evaluating a repository you did not write (a teammate's project, a freshly cloned open-source repo). Running its hooks and tests can have side effects (network calls / webhooks, file writes, environment changes) even on repositories you trust, and running them against crafted input is itself risky. Static analysis (Phases 1 and 3) only reads files and is always safe.
 
 Determine the run mode from the invocation:
 
-- If the arguments include `--static-only` (or `--no-dynamic`), run **static-only mode**: perform Phase 1 and Phase 3 only, and **skip Phase 2 entirely**. In the report, mark every Dynamic Analysis subsection as `Skipped (static-only mode)`.
-- Otherwise (default), before doing any Phase 2 step you MUST pass the confirmation gate described in Phase 2. Never execute a target hook or test suite without either an explicit `--static-only`/`--no-dynamic` opt-out having been ruled out AND the user confirming.
+- If the arguments include `--static-only` (or `--no-dynamic`), run **static-only mode**: skip Phase 2 entirely and run every other phase. In the report, mark every Dynamic Analysis subsection as `Skipped (static-only mode)`.
+- Otherwise (the default), run target code in Phase 2 only after the user confirms at the gate below, because the target may be a repository you did not write.
 
 ## Phase 1: Static Analysis
 
@@ -21,8 +21,8 @@ Run the static analysis script:
 HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/static-analysis.sh" "$(pwd)"
 ```
 
-Capture the JSON output. This checks:
-- **Correctness**: bash syntax, JSON validity, hook file mapping, permissions
+Capture the JSON output. Exit code 1 means issues were found and is a normal result; only exit code 2 is a script error. This checks:
+- **Correctness**: bash syntax, JSON validity, hook file mapping, permissions, model and effort settings (`model-config`), agent file format (`agent-format`)
 - **Safety**: tool scope analysis, deny list presence
 - **Completeness**: hook event coverage, CLAUDE.md existence
 - **Consistency**: frontmatter field consistency
@@ -50,19 +50,11 @@ When you do run target code, minimize blast radius:
 ### 2a. Hook Execution Testing
 For each hook script found in `.claude/hooks/` (after the gate above):
 1. Run with empty input: `echo "" | env -i PATH="$PATH" bash <hook>` — should not crash
-2. Run with sample input: `echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | env -i PATH="$PATH" bash <hook>` — should produce output
+2. Run it with a sample payload for the event it is registered for (see the `hooks` section of `.claude/settings.json`): for a PreToolUse/PostToolUse hook on Bash, `echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | env -i PATH="$PATH" bash <hook>`. Record the exit code and what it prints. Silence is normal for many hooks; flag missing output only when the hook's purpose implies it should respond to this event.
 3. Check exit codes are 0 or 1 (Claude Code treats exit 2 as a block signal, not a script error; anything higher indicates a crash)
 
-### 2b. Secret Pattern Testing (if secret scanning hook exists)
-Test true positives and false positives with example (non-real) values:
-```bash
-# True positive — should be detected
-echo "AKIAIOSFODNN7EXAMPLE" | env -i PATH="$PATH" bash <secret-hook>
-# True positive — AWS secret key pattern
-echo "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" | env -i PATH="$PATH" bash <secret-hook>
-# False positive — should NOT trigger
-echo "normal-base64-string-that-is-not-a-key" | env -i PATH="$PATH" bash <secret-hook>
-```
+### 2b. Secret Pattern Testing (if a secret-scanning hook exists)
+Read the hook first to see how it gets its input: a JSON hook event on stdin (e.g. `tool_input.command` or `tool_input.content`), raw stdin, or files it scans itself (such as git-staged files). Build one true-positive and one false-positive probe in that form, using only these fake values: `AKIAIOSFODNN7EXAMPLE` (AWS access key ID), `aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` (AWS secret key in its usual context), and `normal-base64-string-that-is-not-a-key` (should not trigger). For hooks that scan staged files, stage the probe only inside the disposable copy. If a probe cannot reach the hook, record it as `not testable this way`, not as a missed detection.
 
 ### 2c. Existing Test Suite
 Discover the target project's own test runner (do not assume a fixed name — it may be a top-level test script, a `Makefile` target, or a language-specific runner). Only run it after the confirmation gate:
@@ -74,12 +66,28 @@ ls Makefile package.json tests/*.sh test/*.sh 2>/dev/null
 ```
 If no test suite is found, record "No test suite found" and move on.
 
-## Phase 3: Scoring
+## Phase 3: Scoring and History
 
-Run the checklist scoring:
+Run this phase from the target project root. If Phase 2 left the shell in the disposable copy, return to the project first, so the score and history describe the real project.
+
+Prepare the run directory. When `.harness-eval/` has no `.gitignore`, this creates one containing `*`, so git ignores the evaluation files; an existing `.gitignore` (or a symlink by that name) is left untouched:
 ```bash
-HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/scoring.sh" --mode standard "$(pwd)"
+mkdir -p .harness-eval/run && { test -e .harness-eval/.gitignore || test -L .harness-eval/.gitignore || printf '*\n' > .harness-eval/.gitignore; }
 ```
+
+Run the checklist scoring (`tee` shows you the JSON and keeps a copy for the history save):
+```bash
+HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/scoring.sh" --mode standard "$(pwd)" | tee .harness-eval/run/standard-score.json
+```
+
+The pipeline's exit status is `tee`'s, so judge the result by its output: a JSON document with `scores` means scoring worked; an error on stderr with an empty `standard-score.json` means it failed (see Error Handling).
+
+Then save the result to history:
+```bash
+HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save < .harness-eval/run/standard-score.json
+```
+
+It prints `{"id":"eval-YYYY-MM-DD-NNN","saved":true}`. That `id` names the report files in Phase 5.
 
 ## Phase 4: Report Generation
 
@@ -124,7 +132,7 @@ Combine all results into a **bilingual** (English + Korean) report. English sect
 | Production (9.0+) | X | Y | ✓/✗ |
 
 ## Improvement Roadmap
-(Priority-ordered list of 5-10 specific improvements)
+(Improvements in priority order: cover every FAIL and the WARNs worth fixing, without padding)
 
 ---
 
@@ -166,7 +174,7 @@ Combine all results into a **bilingual** (English + Korean) report. English sect
 | 프로덕션 (9.0+) | X | Y | ✓/✗ |
 
 ## 개선 로드맵
-(영향도 순으로 정렬된 5-10개 구체적 개선 사항)
+(영향도 순 개선 사항 — 모든 FAIL과 고칠 가치가 있는 WARN을 담되, 억지로 항목을 채우지 않음)
 ```
 
 ## Phase 5: Save Reports to Files
@@ -175,30 +183,23 @@ Save the English and Korean reports as separate files in the target project:
 ```bash
 mkdir -p .harness-eval/reports
 ```
-- English report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-standard-en.md`
-- Korean report: `.harness-eval/reports/eval-{YYYY-MM-DD}-{NNN}-standard-ko.md`
+- English report: `.harness-eval/reports/{id}-standard-en.md`
+- Korean report: `.harness-eval/reports/{id}-standard-ko.md`
 
-Use the Write tool to create each file. The `{NNN}` sequence number should match the evaluation ID from history.
+`{id}` is the ID printed by the history save in Phase 3. If the save failed, name the files `eval-{YYYY-MM-DD}-unsaved-standard-en.md` and `eval-{YYYY-MM-DD}-unsaved-standard-ko.md` (UTC date of the scoring output's `timestamp`) and tell the user this run was not recorded in history. An unsaved file of that name can already exist from an earlier run the same day, and the Write tool refuses to overwrite a file it has not read, so Read an existing one first and then overwrite it.
 
-## Phase 6: Save History
-
-Save the scoring result to history:
-```bash
-echo '<scoring-json>' | HARNESS_EVAL_ROOT="${CLAUDE_PLUGIN_ROOT}" bash "${CLAUDE_PLUGIN_ROOT}/scripts/history.sh" "$(pwd)" save
-```
-
-Report the evaluation ID and saved report file paths to the user.
+Use the Write tool to create each file. Then report the evaluation ID (or that there is none) and the saved report file paths to the user.
 
 ## Error Handling
 
 - If static-analysis.sh fails with exit 2: report the error but continue with scoring
-- If scoring.sh fails with exit 2: show error and suggest checking jq/dependencies
-- If history.sh save fails: warn but don't block the report
-- If no `.claude/` directory exists: note very low score expected, guide user to set up basics
+- If scoring.sh fails (an error on stderr and an empty `.harness-eval/run/standard-score.json`): show the error, suggest checking jq/dependencies, and skip the history save, since there is no score to record
+- If history.sh save fails: warn, use the unsaved report file names from Phase 5, and still deliver the report
+- If no `.claude/` directory exists: the score will be very low. Suggest running `/init` in a Claude Code session to create a CLAUDE.md, then adding `.claude/settings.json` with permissions and hooks.
 
 ## Tone
 
-Be thorough but constructive. For each issue found, provide a specific fix. Prioritize the improvement roadmap by impact.
+Be constructive: give a specific fix for each issue found, and order the improvement roadmap by impact.
 
 ## Language
 
