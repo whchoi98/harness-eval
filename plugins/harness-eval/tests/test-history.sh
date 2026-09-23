@@ -271,6 +271,120 @@ assert_exit_code "exit code: no-arguments=2" 2 \
 
 # ---------------------------------------------------------------------------
 echo ""
+echo "--- 12. save refuses symlinked storage and leaves the link target alone ---"
+# ---------------------------------------------------------------------------
+# A target repo can commit these paths as links to files outside the project.
+save_rc() {
+  # Run save on $1 with SCORE_A and print its exit code.
+  local rc
+  set +e
+  echo "$SCORE_A" | "$HISTORY" "$1" save >/dev/null 2>&1
+  rc=$?
+  set -e
+  echo "$rc"
+}
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj/.harness-eval"
+printf 'KEEP\n' > "$T/victim"
+ln -s "$T/victim" "$T/proj/.harness-eval/latest.json"
+assert_eq "symlinked latest.json: save exits 2" "2" "$(save_rc "$T/proj")"
+assert_eq "symlinked latest.json: link target unchanged" "KEEP" "$(cat "$T/victim")"
+if [[ ! -e "$T/proj/.harness-eval/history.json" ]]; then
+  pass "symlinked latest.json: nothing written (no history.json)"
+else
+  fail "symlinked latest.json: nothing written (no history.json)" "history.json was created"
+fi
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj/.harness-eval"
+ln -s "$T/created-by-history.json" "$T/proj/.harness-eval/latest.json"
+assert_eq "dangling latest.json link: save exits 2" "2" "$(save_rc "$T/proj")"
+if [[ ! -e "$T/created-by-history.json" ]]; then
+  pass "dangling latest.json link: link target not created"
+else
+  fail "dangling latest.json link: link target not created" "target file was created"
+fi
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj/.harness-eval"
+printf 'KEEP\n' > "$T/victim"
+ln -s "$T/victim" "$T/proj/.harness-eval/history.json"
+assert_eq "symlinked history.json: save exits 2" "2" "$(save_rc "$T/proj")"
+assert_eq "symlinked history.json: link target unchanged" "KEEP" "$(cat "$T/victim")"
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj" "$T/victimdir"
+ln -s "$T/victimdir" "$T/proj/.harness-eval"
+assert_eq "symlinked .harness-eval dir: save exits 2" "2" "$(save_rc "$T/proj")"
+assert_eq "symlinked .harness-eval dir: link target stays empty" "" "$(ls -A "$T/victimdir")"
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "--- 13. save creates a self-ignoring .harness-eval/.gitignore once ---"
+# ---------------------------------------------------------------------------
+T="$(new_tmpdir)"
+mkdir -p "$T/proj"
+echo "$SCORE_A" | "$HISTORY" "$T/proj" save >/dev/null 2>&1
+assert_eq ".gitignore created with '*'" "*" "$(cat "$T/proj/.harness-eval/.gitignore" 2>/dev/null || echo missing)"
+printf 'history.json\n' > "$T/proj/.harness-eval/.gitignore"
+echo "$SCORE_B" | "$HISTORY" "$T/proj" save >/dev/null 2>&1
+assert_eq "existing .gitignore not overwritten by a later save" "history.json" "$(cat "$T/proj/.harness-eval/.gitignore")"
+
+# The run directory may exist before the first save (Full creates it first).
+T="$(new_tmpdir)"
+mkdir -p "$T/proj/.harness-eval/run"
+echo "$SCORE_A" | "$HISTORY" "$T/proj" save >/dev/null 2>&1
+assert_eq ".gitignore created when .harness-eval/ already exists" "*" "$(cat "$T/proj/.harness-eval/.gitignore" 2>/dev/null || echo missing)"
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj/.harness-eval"
+ln -s "$T/created-gitignore" "$T/proj/.harness-eval/.gitignore"
+assert_eq "symlinked .gitignore: save still succeeds" "0" "$(save_rc "$T/proj")"
+if [[ ! -e "$T/created-gitignore" ]]; then
+  pass "symlinked .gitignore: link not followed"
+else
+  fail "symlinked .gitignore: link not followed" "link target was created"
+fi
+
+if command -v git &>/dev/null; then
+  T="$(new_tmpdir)"
+  mkdir -p "$T/proj"
+  git -C "$T/proj" init -q
+  echo "$SCORE_A" | "$HISTORY" "$T/proj" save >/dev/null 2>&1
+  assert_eq "git status shows nothing under .harness-eval/ after save" "" \
+    "$(git -C "$T/proj" status --porcelain --untracked-files=all)"
+else
+  pass "git status check skipped (git not installed)"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "--- 14. save keeps the usual file mode ---"
+# ---------------------------------------------------------------------------
+# Writes go through mktemp (0600) and a rename. A new file should still get
+# the mode a plain redirect would give under the caller's umask, and an
+# existing file should keep the mode it already has.
+file_mode() {
+  stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1" 2>/dev/null || echo unknown
+}
+
+T="$(new_tmpdir)"
+mkdir -p "$T/proj"
+(umask 022; echo "$SCORE_A" | "$HISTORY" "$T/proj" save >/dev/null 2>&1)
+assert_eq "latest.json mode is 644 under umask 022" "644" "$(file_mode "$T/proj/.harness-eval/latest.json")"
+
+# A user who narrowed the files to 600 keeps 600 after the next save, even
+# though the umask would give 644 to a new file.
+chmod 600 "$T/proj/.harness-eval/history.json" "$T/proj/.harness-eval/latest.json"
+(umask 022; echo "$SCORE_B" | "$HISTORY" "$T/proj" save >/dev/null 2>&1)
+assert_eq "save after chmod 600 still rewrites latest.json (8.5)" "8.5" \
+  "$(jq -r '.scores.overall' "$T/proj/.harness-eval/latest.json" 2>/dev/null || echo unreadable)"
+assert_eq "history.json keeps mode 600 across a save" "600" "$(file_mode "$T/proj/.harness-eval/history.json")"
+assert_eq "latest.json keeps mode 600 across a save" "600" "$(file_mode "$T/proj/.harness-eval/latest.json")"
+
+# ---------------------------------------------------------------------------
+echo ""
 echo "========================="
 echo "Results: $PASS passed, $FAIL failed"
 if [[ $FAIL -gt 0 ]]; then
