@@ -131,4 +131,4 @@ Then re-run this runbook from step 1 after fixing the underlying issue.
 - A release that follows a change in Claude's model line (a new, deprecated, or retired
   model, or a new target model for the agents) goes through `model-change.md` first, so the
   model tables, the agents' model and effort, and the measured run times are current.
-- Last verified: 2026-07-09
+- Last verified: 2026-09-24 (v0.3.0)

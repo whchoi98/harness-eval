@@ -19,6 +19,18 @@ harness-eval is a Claude Code plugin that systematically evaluates the engineeri
 
 The plugin scores projects across 12 dimensions in 3 categories — Basic Quality (correctness, safety, completeness, consistency), Operational (actionability, testability, cost efficiency, contract-based testing), and Design Quality (agent communication, context management, feedback loop maturity, evolvability) — producing structured reports with letter grades (A+ through F) and improvement roadmaps.
 
+## What's New in v0.3.0
+
+Tuned for Claude Opus 5.5. See the [CHANGELOG](CHANGELOG.md#030---2026-09-24) for the full list.
+
+- **Opus 5.5 with per-agent effort** — all five Full-mode agents use the `opus` alias (Claude Opus 5.5 on Claude Code 2.1.280+) and pin their own effort (collector `low`, evaluators `medium` / safety `high`, synthesizer `medium`), so evaluation depth no longer follows each user's session effort. See [Models and Effort](#models-and-effort).
+- **Scored in code, handed off as files** — Full mode passes script output and the collector's inventory as files under `.harness-eval/run/`, and `scripts/aggregate.sh` computes the weighted score and grade; the synthesizer is the only step that saves history and writes the reports.
+- **Criteria for current models** — Cost Efficiency judges model and effort by cost per completed task; new criteria cover instruction fit for current models, delegation fit, and model-change resilience; new static checks `model-config` and `agent-format`.
+- **Safer by default** — no mode edits your README (the badge is opt-in), `.harness-eval/` ignores itself in git, and history and badge writes refuse symlinks planted by the evaluated repository.
+- **Measured on Claude Opus 5.5** — Quick about 30 s, Full 5-7 min (about $3.3 on the production fixture).
+
+**Upgrading from 0.2.x:** reports are now named by the saved evaluation ID (`eval-<date>-<NNN>-<mode>-{en|ko}.md`) and Compare works from saved Standard and Full runs only (Quick runs are not recorded in history; 0.2.x told you to run Quick twice, which never worked). The two new Correctness checks can shift Basic Quality scores, so expect one step in history trends at this release.
+
 ## Features
 
 - **3-Tier Evaluation System** — Choose evaluation depth: Quick (< 30s checklist), Standard (static + dynamic analysis), or Full (multi-agent parallel review)
@@ -323,6 +335,18 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 harness-eval은 Claude Code 하네스 구성의 엔지니어링 품질을 체계적으로 평가하는 Claude Code 플러그인입니다. 결정론적 스크립트 기반 정량 검사와 AI 에이전트 기반 정성 리뷰를 3단계 평가 체계(Quick / Standard / Full)로 결합합니다.
 
 3개 카테고리의 12개 차원 — 기본 품질(정확성, 안전성, 완전성, 일관성), 운영(실행 가능성, 검증 가능성, 비용 효율성, 계약 기반 테스트), 설계 품질(에이전트 커뮤니케이션, 컨텍스트 관리, 피드백 루프 성숙도, 진화 가능성) — 에 걸쳐 프로젝트를 평가하고, 등급(A+~F)이 포함된 구조화된 보고서와 개선 로드맵을 제공합니다.
+
+## v0.3.0 변경 사항
+
+Claude Opus 5.5에 맞춘 릴리스입니다. 전체 목록은 [CHANGELOG](CHANGELOG.md#030---2026-09-24-1)를 참고하세요.
+
+- **Opus 5.5 + 에이전트별 effort** — Full 모드의 에이전트 5개는 모두 `opus` alias(Claude Code 2.1.280 이상에서 Claude Opus 5.5)를 쓰고 effort를 직접 고정합니다(collector `low`, 평가 에이전트 `medium` / safety `high`, synthesizer `medium`). 그래서 평가 깊이가 사용자의 세션 effort에 따라 달라지지 않습니다. [모델과 effort](#모델과-effort) 참고.
+- **점수는 코드로, 데이터는 파일로** — Full 모드는 스크립트 결과와 collector 인벤토리를 `.harness-eval/run/` 아래 파일로 넘기고, 가중 점수와 등급은 `scripts/aggregate.sh`가 계산합니다. history 저장과 보고서 작성은 synthesizer 한 곳에서만 합니다.
+- **현재 모델에 맞춘 평가 기준** — 비용 효율성은 모델과 effort를 완료 작업당 비용으로 판단합니다. 현재 모델에 맞는 지시문, 위임 적합성, 모델 교체 대응력을 보는 기준과 정적 검사 `model-config`·`agent-format`이 새로 들어갔습니다.
+- **기본값이 더 안전해짐** — 어떤 모드도 README를 고치지 않고(뱃지는 opt-in), `.harness-eval/`은 git에서 스스로를 무시하며, history와 뱃지 쓰기는 평가 대상 저장소가 심어 둔 symlink를 거부합니다.
+- **Claude Opus 5.5로 실측** — Quick 약 30초, Full 5~7분(production fixture 기준 약 $3.3).
+
+**0.2.x에서 업그레이드할 때:** 보고서 이름이 저장된 평가 ID를 따르고(`eval-<date>-<NNN>-<mode>-{en|ko}.md`), Compare는 저장된 Standard·Full 실행만 비교합니다(Quick 실행은 history에 기록되지 않습니다. 0.2.x의 'Quick을 두 번 실행하라'는 안내는 원래 동작하지 않았습니다). 새 정확성 검사 2개 때문에 기본 품질 점수가 달라질 수 있어, 이번 릴리스에서 history 추세가 한 번 꺾일 수 있습니다.
 
 ## 주요 기능
 

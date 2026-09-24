@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-09-23
+## [0.3.0] - 2026-09-24
 
 Tuning release for Claude Opus 5.5: every Full-mode agent sets its model alias and effort,
 Full mode hands data between phases as files and computes its score in a script, and
@@ -180,7 +180,7 @@ suite runs 190 checks via `harness-run-all.sh` and `claude plugin validate` exit
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-09-23
+## [0.3.0] - 2026-09-24
 
 Claude Opus 5.5에 맞춘 튜닝 릴리스다. Full 모드의 모든 에이전트가 모델 alias와 effort를 직접 지정하고, Full 모드는 단계 사이의 데이터를 파일로 넘기며 점수를 스크립트로 계산한다. 정적 분석은 모델·effort 설정도 검사한다. `harness-run-all.sh` 기준 447개 체크를 실행한다.
 
