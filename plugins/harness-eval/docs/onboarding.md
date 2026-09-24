@@ -18,10 +18,13 @@ bash scripts/setup.sh
 
 ### 3. Verify
 ```bash
-# Run evaluation script tests
+# Run evaluation script tests (the four suites: 24 + 107 + 38 + 74 = 243 tests)
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
+HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
+HARNESS_EVAL_ROOT=$(pwd) bash tests/test-history.sh
+HARNESS_EVAL_ROOT=$(pwd) bash tests/test-aggregate.sh
 
-# Run harness validation tests (resolves to repo root automatically)
+# Run harness validation tests (resolves to repo root automatically; 447 checks, including the four suites above)
 bash tests/harness-run-all.sh
 
 # Validate JSON
@@ -41,23 +44,26 @@ find . -name "*.sh" -not -path "./.git/*" -exec bash -n {} \;
 ## Development Workflow
 - Branch naming: `feat/`, `fix/`, `docs/`, `refactor/`
 - Commit convention: Conventional Commits
-- All scripts must accept `$1` as target project root
+- All scripts accept `$1` as the target project root, except `aggregate.sh`, which reads JSON on stdin and takes no arguments
 - All scripts must output JSON to stdout, logs to stderr
-- Exit codes: 0 = success, 1 = issues found, 2 = script error
+- Exit codes: 0 = success, 1 = issues found, 2 = script error (`aggregate.sh` uses only 0 and 2)
 
 ## Key Concepts
 
 ### 3-Tier Evaluation
-- **Quick**: Checklist-based, < 30 seconds, runs `scoring.sh`
-- **Standard**: Static + dynamic analysis, runs `scoring.sh` + `static-analysis.sh`
-- **Full**: Multi-agent parallel evaluation with collector, 3 evaluators, and synthesizer
+- **Quick**: Checklist-based, < 30 seconds, runs `scoring.sh`; not saved to history
+- **Standard**: Static + dynamic analysis, runs `scoring.sh` + `static-analysis.sh`, then the target's hooks and tests after the user confirms (`--static-only` skips them); saves history before writing its reports
+- **Full**: Multi-agent parallel evaluation with collector, 3 evaluators, and synthesizer. The phases pass script output and the collector's inventory as files under the target's `.harness-eval/run/` by path (the three evaluator results travel inline to the synthesizer), `scripts/aggregate.sh` computes the score, and the synthesizer alone saves history and writes the two report files (the collector-failure fallback saves the Standard score instead)
+- No mode runs `badge.sh`; the Stop hook updates the README badge only when the user opted in, once per saved evaluation
 
 ### Test Fixtures
-Mock projects at 4 maturity levels in `tests/fixtures/`:
+Mock projects at 4 maturity levels in `tests/fixtures/` (frozen — update test expectations instead of editing them):
 - `minimal-project` — CLAUDE.md + basic settings only
 - `functional-project` — hooks, skills, agents, commands present
 - `robust-project` — tests, deny list, module docs
 - `production-project` — CI/CD, changelog, comprehensive docs
+
+Regression fixtures: `nested-hooks-project` (nested hook schema, also frozen) and `model-era-project` (model pins, effort values, and non-`.md` agent files for `model-config` / `agent-format`). See `tests/fixtures/README.md`.
 
 ### Monorepo Structure
 This plugin lives in a monorepo: `plugins/harness-eval/` is the plugin root, the repo root contains the marketplace manifest (`.claude-plugin/marketplace.json`).
@@ -75,7 +81,7 @@ This plugin lives in a monorepo: `plugins/harness-eval/` is the plugin root, the
 Install jq: `sudo yum install jq` (AL2023) or `brew install jq` (macOS)
 
 ### Scripts output nothing
-Ensure `HARNESS_EVAL_ROOT` is set: `HARNESS_EVAL_ROOT=$(pwd) bash scripts/scoring.sh <target>`
+Check stderr: scripts report failures there as a JSON `error` (exit 2). Common causes are a missing `jq` or a wrong target path. `HARNESS_EVAL_ROOT` is optional; `scoring.sh` and `static-analysis.sh` detect the plugin root themselves.
 
 ### Permission denied on scripts
 Run: `chmod +x scripts/*.sh hooks/*.sh tests/*.sh`

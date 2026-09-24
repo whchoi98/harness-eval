@@ -25,14 +25,16 @@ verifies a clean marketplace install.
 git switch main && git pull --ff-only
 git status --porcelain            # must be empty
 
-# Full suite: all four test suites + shellcheck stage, in one command.
+# Full suite: hook, secret-pattern and structure checks, the four evaluation-script
+# suites, and the shellcheck stage, in one command.
 cd plugins/harness-eval
 bash tests/harness-run-all.sh
 
-# The three evaluation suites, as documented (granular output):
+# The four evaluation suites, as documented (granular output):
 HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-static-analysis.sh
 HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-history.sh
+HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-aggregate.sh
 cd -
 ```
 Do not proceed unless every suite passes.
@@ -65,6 +67,9 @@ jq --arg v "$NEW_VERSION" '.version = $v' \
    && mv plugins/harness-eval/.claude-plugin/plugin.json.tmp plugins/harness-eval/.claude-plugin/plugin.json
 ```
 
+Also update the version badge near the top of `README.md` (`version-X.Y.Z-green.svg`). No
+test checks it, so it drifts unless it is bumped here.
+
 ### 4. Update the CHANGELOG
 Move the `[Unreleased]` entries into a new `[$NEW_VERSION] - YYYY-MM-DD` section in
 `CHANGELOG.md`. Keep the English and Korean (한국어) sections in sync — both are bilingual
@@ -83,7 +88,7 @@ The version-consistency assertions in the structure suite confirm the three mani
 ```bash
 git add .claude-plugin/marketplace.json \
         plugins/harness-eval/.claude-plugin/plugin.json \
-        CHANGELOG.md
+        CHANGELOG.md README.md
 git commit -m "release: v$NEW_VERSION"
 git tag -a "v$NEW_VERSION" -m "harness-eval v$NEW_VERSION"
 git push origin main
@@ -98,8 +103,8 @@ claude plugin install harness-eval@harness-eval
 ```
 
 ## Verification
-- [ ] `harness-run-all.sh` passes (all four suites + shellcheck stage) on the release commit.
-- [ ] `metadata.version`, `plugins[0].version`, and `plugin.json` `version` are all `$NEW_VERSION`.
+- [ ] `harness-run-all.sh` passes (harness checks, the four evaluation suites, and the shellcheck stage) on the release commit.
+- [ ] `metadata.version`, `plugins[0].version`, and `plugin.json` `version` are all `$NEW_VERSION`, and the README version badge matches.
 - [ ] Both manifests are valid JSON (`python3 -m json.tool`).
 - [ ] `CHANGELOG.md` has a dated `[$NEW_VERSION]` section (EN + KO) and a fresh empty `[Unreleased]`.
 - [ ] Tag `v$NEW_VERSION` exists on the remote and points at the release commit.
@@ -123,4 +128,7 @@ Then re-run this runbook from step 1 after fixing the underlying issue.
   never bump one manifest without the others.
 - Runtime evaluation artifacts (`.harness-eval/`) are gitignored and must never be part of
   a release commit.
-- Last verified: 2026-07-09
+- A release that follows a change in Claude's model line (a new, deprecated, or retired
+  model, or a new target model for the agents) goes through `model-change.md` first, so the
+  model tables, the agents' model and effort, and the measured run times are current.
+- Last verified: 2026-09-24 (v0.3.0)

@@ -76,19 +76,20 @@ jobs:
           done < <(find . -name '*.json' -not -path './.git/*' -not -path '*/node_modules/*' -print0)
           exit "$rc"
 
-      # The three evaluation-script suites, invoked exactly as documented in
+      # The four evaluation-script suites, invoked exactly as documented in
       # plugins/harness-eval/CLAUDE.md, for granular per-suite CI logs.
-      - name: Evaluation suites (scoring / static-analysis / history)
+      - name: Evaluation suites (scoring / static-analysis / history / aggregate)
         working-directory: plugins/harness-eval
         run: |
           HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-scoring.sh
           HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-static-analysis.sh
           HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-history.sh
+          HARNESS_EVAL_ROOT="$(pwd)" bash tests/test-aggregate.sh
 
-      # harness-run-all.sh is the single entry point that runs ALL four suites
-      # (it re-runs the three eval suites with HARNESS_EVAL_ROOT and adds the
+      # harness-run-all.sh is the single entry point that runs ALL suites
+      # (it re-runs the four eval suites with HARNESS_EVAL_ROOT and adds the
       # hooks/structure/secret-pattern checks) plus the shellcheck stage.
-      - name: Full harness suite (all 4 suites + shellcheck)
+      - name: Full harness suite (all suites + shellcheck)
         working-directory: plugins/harness-eval
         run: bash tests/harness-run-all.sh
 

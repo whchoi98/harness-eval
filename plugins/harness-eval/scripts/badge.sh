@@ -3,6 +3,7 @@
 # Usage: badge.sh <target-project-root>
 # Output: JSON to stdout, logs to stderr
 # Exit codes: 0 = success, 1 = no latest.json found, 2 = script error
+# A README.md that is a symlink is refused (exit 2) and left unchanged.
 
 set -euo pipefail
 
@@ -133,6 +134,18 @@ update_readme() {
   local badge_block="$1"
   local readme="$TARGET/README.md"
 
+  # A repository can commit README.md as a symlink to a file outside the
+  # project (or a dangling one). Writing through it would modify or create
+  # that file, so refuse and leave the link and its target alone.
+  if [[ -L "$readme" ]]; then
+    emit_error "README.md is a symlink; refusing to modify it (update the badge in the link target by hand)"
+    exit 2
+  fi
+  if [[ -e "$readme" && ! -f "$readme" ]]; then
+    emit_error "README.md is not a regular file; leaving it unchanged"
+    exit 2
+  fi
+
   if [[ ! -f "$readme" ]]; then
     log "README.md not found, creating new one"
     printf '%s\n' "$badge_block" > "$readme"
@@ -148,21 +161,47 @@ update_readme() {
 
   if [[ "$has_start" == true && "$has_end" == true ]]; then
     log "Markers found, replacing badge block"
-    # Replace content between markers (inclusive). The END guard fails the
-    # rewrite if the block never closed (start seen but end never reached),
-    # so a malformed README is preserved rather than truncated.
-    if awk -v new_block="$badge_block" '
-      /<!-- harness-eval-badge:start -->/ { in_block=1; print new_block; next }
+    # Replace content between markers (inclusive). The END guard exits 3 if
+    # the block never closed (start seen but end never reached), so a
+    # malformed README is preserved rather than truncated.
+    # The rewrite goes to a fresh mktemp file: a fixed name such as
+    # README.md.tmp could itself be a committed symlink that `>` would follow.
+    local tmp mode awk_rc=0
+    tmp="$(mktemp "$TARGET/.README.md.XXXXXX")" || {
+      emit_error "Cannot create a temporary file in $TARGET; leaving README.md unchanged"
+      exit 2
+    }
+    # Keep README.md's mode (mktemp creates 0600). GNU stat, then BSD stat.
+    mode="$(stat -c %a "$readme" 2>/dev/null || stat -f %Lp "$readme" 2>/dev/null || true)"
+    if [[ "$mode" =~ ^[0-7]{3,4}$ ]]; then
+      chmod "$mode" "$tmp" 2>/dev/null || true
+    fi
+    # The block reaches awk through the environment, not `awk -v`: BSD awk
+    # (macOS /usr/bin/awk) rejects a -v value that contains a newline, and
+    # ENVIRON also takes the text as is, without -v's escape processing.
+    NEW_BLOCK="$badge_block" awk '
+      /<!-- harness-eval-badge:start -->/ { in_block=1; print ENVIRON["NEW_BLOCK"]; next }
       /<!-- harness-eval-badge:end -->/   { in_block=0; next }
       !in_block { print }
       END { if (in_block == 1) exit 3 }
-    ' "$readme" > "$readme.tmp"; then
-      mv "$readme.tmp" "$readme"
-    else
-      rm -f "$readme.tmp"
-      emit_error "README badge block is malformed (start marker without matching end); leaving README.md unchanged"
+    ' "$readme" > "$tmp" || awk_rc=$?
+    if [[ "$awk_rc" -ne 0 ]]; then
+      rm -f "$tmp"
+      # Only exit 3 means the README itself is at fault. Any other status is
+      # awk (or the write to the temp file) failing, and blaming the README
+      # for that would send the user to fix a file that is fine.
+      if [[ "$awk_rc" -eq 3 ]]; then
+        emit_error "README badge block is malformed (start marker without matching end); leaving README.md unchanged"
+      else
+        emit_error "Rewriting the badge block failed (awk exit $awk_rc); leaving README.md unchanged"
+      fi
       exit 2
     fi
+    mv -f "$tmp" "$readme" || {
+      rm -f "$tmp"
+      emit_error "Cannot replace README.md with the rewritten copy; leaving README.md unchanged"
+      exit 2
+    }
   elif [[ "$has_start" == true ]]; then
     # Start marker present but end marker missing: a destructive rewrite would
     # delete everything after the start marker. Preserve the file instead.

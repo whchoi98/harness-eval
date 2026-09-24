@@ -34,9 +34,9 @@ harness-eval/                  # Monorepo root
 │   ├── commands/              # Slash commands
 │   ├── scripts/               # Bash scripts (scoring, analysis, history)
 │   ├── skills/                # Evaluation skills (quick, standard, full, compare)
-│   ├── templates/             # Report templates (bilingual)
+│   ├── templates/             # Scoring checklist + reference report templates
 │   ├── hooks/                 # Plugin hooks
-│   └── tests/                 # Test suite (190 checks via harness-run-all.sh)
+│   └── tests/                 # Test suite (447 checks via harness-run-all.sh)
 ├── docs/                      # Monorepo-level documentation
 └── scripts/                   # Monorepo-level scripts
 ```
@@ -45,8 +45,9 @@ harness-eval/                  # Monorepo root
 
 1. **Monorepo layout** — Root contains marketplace packaging and dev tools. Plugin code lives in `plugins/harness-eval/`.
 2. **Auto-discovery** — Skills, agents, and commands are discovered by directory convention, not explicit registration.
-3. **CLAUDE.md** — Every directory with meaningful content has a `CLAUDE.md` describing its role and conventions.
-4. **3-tier evaluation** — Quick (checklist), Standard (static+dynamic), Full (multi-agent).
+3. **CLAUDE.md** — Each plugin module directory (`scripts/`, `skills/`, `hooks/`, `templates/`, `tests/`) has a `CLAUDE.md` describing its role and conventions. `commands/` and `agents/` must not have one (Claude Code would load it as a component); their notes live in `plugins/harness-eval/CLAUDE.md`.
+4. **3-tier evaluation** — Quick (checklist), Standard (static+dynamic), Full (multi-agent, with phase outputs passed as files under the target's `.harness-eval/run/`).
+5. **Models and effort** — Full-mode agents set `model` and `effort` in frontmatter; the reasons are recorded in the Agents module notes of `plugins/harness-eval/CLAUDE.md` and in ADR-003.
 
 ## Running Tests
 
@@ -60,6 +61,7 @@ bash tests/harness-run-all.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-scoring.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-static-analysis.sh
 HARNESS_EVAL_ROOT=$(pwd) bash tests/test-history.sh
+HARNESS_EVAL_ROOT=$(pwd) bash tests/test-aggregate.sh
 
 # Subset by category
 bash tests/harness-run-all.sh hooks
@@ -71,7 +73,7 @@ bash tests/harness-run-all.sh structure
 1. Read the relevant `CLAUDE.md` files before modifying any directory
 2. Follow the conventions documented in `plugins/harness-eval/CLAUDE.md`
 3. Run relevant tests after changes
-4. If adding a new directory under the plugin, create a `CLAUDE.md` in it
+4. If adding a new top-level directory under the plugin, create a `CLAUDE.md` in it, except in `commands/` and `agents/`; document subdirectories (e.g. `scripts/lib/`) in the parent module's `CLAUDE.md`
 5. If making an architectural decision, create an ADR in `plugins/harness-eval/docs/decisions/`
 
 ## Installing the Plugin

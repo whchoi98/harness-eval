@@ -1,6 +1,6 @@
 {
   "name": "harness-eval",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evaluate Claude Code harness engineering quality. Quick/Standard/Full 3-tier evaluation with multi-agent design review, history tracking, and badge generation.",
   "author": {
     "name": "WooHyung Choi",

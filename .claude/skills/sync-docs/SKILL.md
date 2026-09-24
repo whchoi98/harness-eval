@@ -1,40 +1,27 @@
+---
+name: sync-docs
+description: Bring harness-eval's CLAUDE.md files, architecture docs, and manifests back in line with the current code. Use when the user asks to sync or audit docs, or after structural changes.
+---
+
 # Sync Docs Skill
 
 Synchronize project documentation with current code state.
 
 ## Actions
 
-### 1. Quality Assessment
-Score each CLAUDE.md file (0-100) across:
-- Commands/workflows (20 pts)
-- Architecture clarity (20 pts)
-- Non-obvious patterns (15 pts)
-- Conciseness (15 pts)
-- Currency (15 pts)
-- Actionability (15 pts)
+### 1. Assess
+For each CLAUDE.md, list what is wrong or stale: commands that don't run as written against the actual scripts, structure/architecture statements that no longer match, hard-coded facts (test counts, versions, file lists) that disagree with the code, and conventions the code follows that the file doesn't mention. Share this list before editing.
 
-Apply anti-pattern deductions:
-- Over 500 lines (-15)
-- Vague instructions (-10)
-- Duplicated docs (-10)
-- No test guidance (-10)
-- Contains secrets (-20)
+### 2. Root CLAUDE.md
+The root CLAUDE.md is a short pointer (Overview, Structure, Installation, Development) that defers to `plugins/harness-eval/CLAUDE.md`; keep it that way. Check that its commands run as written and its structure list matches the tree. Tech Stack, Conventions and Key Commands live in the plugin CLAUDE.md (its headings are asserted by test-plugin-structure.sh).
 
-Output quality report with grades (A-F) before making changes.
-
-### 2. Root CLAUDE.md Sync
-- Update Overview, Tech Stack, Conventions, Key Commands
-- Verify commands are copy-paste ready against actual scripts
-
-### 3. Architecture Doc Sync
-- Update docs/architecture.md to reflect current system structure
-- Add new components, update data flows, reflect infrastructure changes
+### 3. Architecture docs
+There are two: `docs/architecture.md` (monorepo view) and `plugins/harness-eval/docs/architecture.md` (plugin internals, English and Korean sections). Update whichever the change affects and keep both language sections in sync.
 
 ### 4. Module CLAUDE.md Audit
-- Scan all directories under plugin root
-- Create CLAUDE.md for modules missing one
-- Update existing module CLAUDE.md files if out of date
-- Score each module CLAUDE.md
+- The module directories are `scripts/`, `skills/`, `hooks/`, `templates/`, `tests/` under `plugins/harness-eval/` (the set `tests/structure/test-plugin-structure.sh` checks). Make sure each has a CLAUDE.md that matches the code; do not create CLAUDE.md in their subdirectories.
+- `commands/` and `agents/` are auto-discovered, so a CLAUDE.md there registers a bogus component - their notes live in the plugin-root CLAUDE.md "Module Notes".
+- Never create CLAUDE.md under `tests/fixtures/`, and never edit the existing fixture projects (they are frozen test inputs; new coverage goes in a new fixture directory).
 
 ### 5. ADR and Runbook Audit
 - Check recent commits for undocumented architectural decisions
@@ -46,9 +33,10 @@ Output quality report with grades (A-F) before making changes.
   `skills`/`agents`/`commands`/`hooks` path arrays — those are auto-discovered),
   so validate the auto-discovered component directories exist instead of checking
   path arrays.
-- Verify version consistency across all three locations:
-  `plugins/harness-eval/.claude-plugin/plugin.json` (`version`) and
-  `.claude-plugin/marketplace.json` (`metadata.version` and `plugins[].version`).
+- Verify version consistency across all four locations:
+  `plugins/harness-eval/.claude-plugin/plugin.json` (`version`),
+  `.claude-plugin/marketplace.json` (`metadata.version` and `plugins[].version`), and
+  the README version badge (`version-X.Y.Z-green.svg` near the top of `README.md`).
 
 ### 7. Report
-Output before/after quality scores, anti-patterns detected, and list of all changes.
+List each file changed and what was corrected.

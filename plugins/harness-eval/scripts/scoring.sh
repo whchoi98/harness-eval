@@ -21,6 +21,22 @@ check_dependencies() {
 }
 
 ###############################################################################
+# Shared grade thresholds: score_to_grade comes from lib/grade.sh, the single
+# definition also used by aggregate.sh (Full mode). Located relative to this
+# script, not HARNESS_EVAL_ROOT, so it always matches the code being run.
+###############################################################################
+load_grade_lib() {
+  local lib
+  lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/grade.sh"
+  if [[ ! -f "$lib" ]]; then
+    emit_error "Grade helper not found: $lib"
+    exit 2
+  fi
+  # shellcheck source=/dev/null
+  source "$lib"
+}
+
+###############################################################################
 # Globals
 ###############################################################################
 MODE="standard"
@@ -637,18 +653,9 @@ evaluate() {
     }")"
   fi
 
-  # Grade mapping
+  # Grade mapping (shared thresholds, lib/grade.sh)
   local grade
-  grade="$(awk "BEGIN {
-    s = $overall
-    if (s >= 9.5) print \"A+\"
-    else if (s >= 9.0) print \"A\"
-    else if (s >= 8.5) print \"A-\"
-    else if (s >= 8.0) print \"B+\"
-    else if (s >= 7.0) print \"B\"
-    else if (s >= 6.0) print \"C\"
-    else print \"F\"
-  }")"
+  grade="$(score_to_grade "$overall")"
 
   log "Overall: $overall ($grade)"
 
@@ -702,6 +709,7 @@ evaluate() {
 ###############################################################################
 main() {
   check_dependencies
+  load_grade_lib
   resolve_root
   parse_args "$@"
 
